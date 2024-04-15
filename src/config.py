@@ -35,17 +35,16 @@ class StatusEnum(str, Enum):
 class Config:
     def __init__(self):
         # args to run 
-        self.INCIDENCE_CALL_EMERGENCY_VEHICLE_PER_ACCIDENT = 1.2
-        self.SIMULATION_END_TIME = 1200
-        self.TRIPS_REPETITION_RATE = 1
-        self.ALGORITHM = 'proposto'
+        # self.PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT = 1.2
+        # self.SIMULATION_END_TIME = 1600
+        # self.TRIPS_REPETITION_RATE = 1
+        # self.ALGORITHM = 'proposto'
         self.INTERVAL_ACCIDENT_TIME = 150
-        self.INTERVAL_CALL_EMERGENCY_VEHICLE_TIME = self.INTERVAL_ACCIDENT_TIME * self.INCIDENCE_CALL_EMERGENCY_VEHICLE_PER_ACCIDENT
+        # self.INTERVAL_CALL_EMERGENCY_VEHICLE_TIME = self.INTERVAL_ACCIDENT_TIME * self.PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT
         self.LANE_LENGTH = 150.0
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
-        self.TLJ_PHASE_GREEN_DURATION = 5
-        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 3.0 # Seconds
-        self.MAX_SPEED_ROAD_ACCIDENTED = 0.8
+        self.TLJ_PHASE_GREEN_DURATION = 5.0
+        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 7.0 # Seconds
         self.MAX_STOP_DURATION = 10 # not working
         self.MAX_SPEED_ROAD_RECOVERED = 50
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0
@@ -65,6 +64,12 @@ class Config:
             self.SeverityEnum.MEDIUM: (255, 255, 0, 255),
             self.SeverityEnum.LOW: (0, 255, 0, 255)
         }
+        self.severity_speed_road_accidented = {
+            self.SeverityEnum.CRITICAL: 0.8,
+            self.SeverityEnum.HIGH: 1.1,
+            self.SeverityEnum.MEDIUM: 1.4,
+            self.SeverityEnum.LOW: 1.7
+        }
 
 
     # Método para atualizar configurações
@@ -73,5 +78,5 @@ class Config:
             if hasattr(self, key):
                 setattr(self, key, value)
 
-# Instância global que pode ser importada e modificada conforme necessário
+# Instância global a ser importada
 settings = Config()

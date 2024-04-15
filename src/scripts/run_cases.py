@@ -14,6 +14,12 @@ def run_simulation(
     emissions_filename: str,
     route_filename: str,
     trips_filename: str,
+    tripinfo_filename: str,
+    
+    PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT: str,
+    SIMULATION_END_TIME: str,
+    TRIPS_REPETITION_RATE: str,
+    ALGORITHM: str,
 ):
     # execute main.py com as configurações atualizadas
     subprocess.run([
@@ -23,13 +29,18 @@ def run_simulation(
         '--emissions_filepath', emissions_filename,
         '--route_filepath', route_filename,
         '--trips_filepath', trips_filename,
+        '--tripinfo_filepath', tripinfo_filename, 
+        
+        '--PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT', PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT,
+        '--SIMULATION_END_TIME', SIMULATION_END_TIME,
+        '--TRIPS_REPETITION_RATE', TRIPS_REPETITION_RATE,
+        '--ALGORITHM', ALGORITHM,
     ])
-    emission_xml_to_csv(emissions_filename, f'{emissions_filename[:-4]}.csv')
-    summary_xml_to_csv(summary_filename, f'{summary_filename[:-4]}.csv')
 
 def main():
     # Carregar os casos de teste do arquivo CSV
-    df = pd.read_csv('cases.csv')
+    filepath = f'{os.getcwd()}/scripts/cases.csv'
+    df = pd.read_csv(filepath)
     # Cria um ThreadPoolExecutor para gerenciar a execução simultânea
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         # Lista para armazenar os futuros
@@ -41,16 +52,26 @@ def main():
             emissions_filename = f'data/emissions_{index}.xml'
             route_filename = f'route_{index}.rou.xml'
             trips_filename = f'data/trips_{index}.trips.xml'
+            tripinfo_filename = f'data/tripinfo_{index}.xml'
 
-            # Atualiza a configuração global
-            settings.update(
-                INCIDENCE_CALL_EMERGENCY_VEHICLE_PER_ACCIDENT=row['Incidência de Acidentes por ambulância (#acidentes/#ambulâncias)'],
-                SIMULATION_END_TIME=row['Tempo de Simulação (steps)'],
-                TRIPS_REPETITION_RATE=row['Incidência de Viagens Por Unidade de Tempo (trip/second)'],
-                ALGORITHM=row['Algoritmo'],
-                # Adicione outras atualizações conforme necessário
+            PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT=str(row['Incidência de Acidentes por ambulância (#acidentes/#ambulâncias)'])
+            SIMULATION_END_TIME=str(row['Tempo de Simulação (steps)'])
+            TRIPS_REPETITION_RATE=str(row['Incidência de Viagens Por Unidade de Tempo (trip/second)'])
+            ALGORITHM=str(row['Algoritmo'])
+
+            future = executor.submit(
+                run_simulation,
+                sumocfg_filename=sumocfg_filename,
+                summary_filename=summary_filename,
+                emissions_filename=emissions_filename,
+                route_filename=route_filename,
+                trips_filename=trips_filename,
+                tripinfo_filename=tripinfo_filename,
+                PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT=PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT,
+                SIMULATION_END_TIME=SIMULATION_END_TIME,
+                TRIPS_REPETITION_RATE=TRIPS_REPETITION_RATE,
+                ALGORITHM=ALGORITHM,
             )
-            future = executor.submit(run_simulation, sumocfg_filename, summary_filename, emissions_filename, route_filename, trips_filename)
             futures.append(future)
             
         for future in concurrent.futures.as_completed(futures):

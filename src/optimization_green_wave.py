@@ -36,6 +36,7 @@ def improve_traffic_for_emergency_vehicle():
                     for key in range(len(settings.buffer_tls_on_transition) - 1):
                         tls_on_transition = settings.buffer_tls_on_transition[key]
                         if tls_on_transition['tls_id'] == tls_id:
+                            # print(tls_on_transition['time_limit'] < traci.simulation.getTime())
                             if tls_on_transition['time_limit'] < traci.simulation.getTime():
                                 traci.trafficlight.setPhaseDuration(tls_id, settings.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT)
                                 settings.buffer_tls_on_transition[key]['time_limit'] = traci.simulation.getTime() + settings.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT
