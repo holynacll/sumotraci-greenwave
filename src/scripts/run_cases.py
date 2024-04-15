@@ -1,8 +1,12 @@
+import os
+import sys
 import pandas as pd
 import subprocess
 import concurrent.futures
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import settings
-from xml_to_csv import emission_xml_to_csv, summary_xml_to_csv
+from src.transform.xml_to_csv import emission_xml_to_csv, summary_xml_to_csv
 
 def run_simulation(
     sumocfg_filename: str,

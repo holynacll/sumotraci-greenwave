@@ -1,6 +1,9 @@
 from enum import Enum
 import os
 import sys
+# Dynamically adjust sys.path to include the root directory where setup_environment.py is located
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import setup_environment # Carrega o ambiente de configuração
 
 os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
 # os.environ['SUMO_HOME'] = "/home/alexandre-cury/miniconda3/envs/sumo-env/lib/python3.11/site-packages/sumo"
