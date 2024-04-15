@@ -1,0 +1,2 @@
+    """caso de um acidente ocorre, numa via, numa faixa, e logo em seguida outro acidente ocorre, na mesma via, na outra faixa, e fica todos os veículos dessa via presos, a via fica bloqueada e o veiculo de emergencia nao consegue chegar 
+    """

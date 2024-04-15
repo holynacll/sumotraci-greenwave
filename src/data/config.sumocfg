@@ -1,0 +1,15 @@
+<configuration>
+    <files>
+        <net-file value="road.net.xml" />
+        <route-files value="route.rou.xml" />
+        <summary value="summary.xml" />
+    </files>
+    <process>
+        <begin value="0" />
+        <time-to-teleport value="-1" />
+    </process>
+    <reports>
+        <verbose value="True" />
+        <no-warnings value="True" />
+    </reports>
+</configuration>
