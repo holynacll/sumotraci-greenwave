@@ -70,6 +70,10 @@ def add_emergency_vehicle(veh_accidented_id, accidented_road_id, severity):
     for key, veh_accidented in enumerate(settings.buffer_vehicles_accidenteds):
         if veh_accidented['veh_accidented_id'] == veh_accidented_id:
             settings.buffer_vehicles_accidenteds[key]['veh_emergency_id'] = veh_emergency_id
+    print(
+        f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has been added to help vehicle '
+        f'{veh_accidented_id} in road {accidented_road_id} with severity {severity}'
+    )
 
 
 def find_most_severe_recent_accident(): # EDF - Earliest Deadline First with Deadline Severity

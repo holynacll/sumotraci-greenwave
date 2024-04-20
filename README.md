@@ -13,9 +13,8 @@ Cenário:
    - [x] reroute de veículos para evitar via com acidente
 
   TODO: para apresentação
-   - [ ] - Statistics com marcus e elivelton - tentar marcar para quinta
-   - [ ] - Apresentação final de semana - Padrão PGCOMP 
    - [x] - Terminar o green wave
+   - [ ] - fix accident
 
   TODO
    - [ ] article: Analysis and modelling of road traffic using SUMO tooptimize the arrival time of emergency vehicles

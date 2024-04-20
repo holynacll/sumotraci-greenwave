@@ -48,15 +48,16 @@ def run():
         while shouldContinueSim():
             traci.simulationStep()
             monitor_emergency_vehicles() # monitor emergency vehicles and handle them when they arrive at the accident
-            if traci.simulation.getTime()%settings.INTERVAL_ACCIDENT_TIME == 0:
+            if traci.simulation.getTime()%10 == 0:
                 create_accident() # create accident
-            if traci.simulation.getTime()%interval_call_emergency_vehicle_time == 0:
+            if traci.simulation.getTime()%10 == 0:
                 call_emergency_vehicle()
             if algorithm == 'proposto':
                 improve_traffic_on_accidented_road() # reroute vehicles to avoid of the aciddented road
                 improve_traffic_for_emergency_vehicle() # green wave solution
             # get_statistics_from_timeloss_and_halting(junctionID)
             step += 1
+            # print(f'Step: {step} - Time: {traci.simulation.getTime()}', end='\r')
             if traci.simulation.getTime() > simulation_end_time:
                 break
         # get_network_parameters()

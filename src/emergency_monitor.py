@@ -18,7 +18,16 @@ def speed_road_recovery(accidented_road_id):
             can_increase_max_speed = False
     if can_increase_max_speed:
         traci.edge.setMaxSpeed(accidented_road_id, settings.MAX_SPEED_ROAD_RECOVERED)
-        print("max speed road recovered")
+        print(f'{traci.simulation.getTime()} - Road {accidented_road_id} has been recovered')
+
+
+def remove_vehicle_from_accident(veh_accidented_id):
+    for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
+        if settings.buffer_vehicles_accidenteds[key]['veh_accidented_id'] == veh_accidented_id:
+            settings.buffer_vehicles_accidenteds.pop(key)
+            traci.vehicle.remove(veh_accidented_id)
+            break
+    print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
 
 
 def monitor_emergency_vehicles():
@@ -43,6 +52,7 @@ def monitor_emergency_vehicles_to_the_hospital():
                     tls_on_green_wave = settings.buffer_tls_on_green_wave[key]
                     if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
                         settings.buffer_tls_on_green_wave.pop(key)
+                print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has arrived at the hospital')
 
 
 def monitor_emergency_vehicles_in_the_accident():
@@ -58,12 +68,13 @@ def monitor_emergency_vehicles_in_the_accident():
                 duration -= 1
                 settings.buffer_emergency_vehicles[key]['duration'] = duration
             else:
-                traci.vehicle.remove(veh_accidented_id)
-                traci.vehicle.changeTarget(veh_emergency_id, hospital_pos_end)
+                remove_vehicle_from_accident(veh_accidented_id)
+                # traci.vehicle.changeTarget(veh_emergency_id, hospital_pos_end)
                 settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.TO_THE_HOSPITAL.value
                 speed_road_recovery(accidented_road_id)
                 traci.vehicle.setSpeed(veh_emergency_id, -1)
                 # traci.vehicle.setSpeedMode(veh_emergency_id, 0)
+                print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left the accident')
 
 
 def monitor_emergency_vehicles_on_the_way():
@@ -81,3 +92,4 @@ def monitor_emergency_vehicles_on_the_way():
                     traci.vehicle.setSpeedMode(veh_emergency_id, 31)
                     traci.vehicle.setSpeed(veh_emergency_id, 0)
                     settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.IN_THE_ACCIDENT.value
+                    print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has arrived at the accident')
