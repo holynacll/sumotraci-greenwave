@@ -16,15 +16,42 @@ def call_emergency_vehicle():
     if not vehicle_to_help:
         return "Não há veículos acidentados sem veículo de emergência associado"
 
-    # Chama veículo de emergência para o acidente mais grave e mais recente
+    # Agenda veículo de emergência para o acidente mais grave e mais recente
     accident = find_most_severe_recent_accident()
     if accident is not None:
-        add_emergency_vehicle(accident['veh_accidented_id'], accident['accidented_road_id'], accident['severity'])
+        schedule_emergency_vehicle(accident=accident)
 
 
-def add_emergency_vehicle(veh_accidented_id, accidented_road_id, severity):
-    emergency_route_id = f"rou_emergency_{traci.simulation.getTime()}"
+def schedule_emergency_vehicle(accident):
+    veh_accidented_id = accident['veh_accidented_id']
     veh_emergency_id = f"veh_emergency_{traci.simulation.getTime()}"
+    for key, veh_accidented in enumerate(settings.buffer_vehicles_accidenteds):
+        if veh_accidented['veh_accidented_id'] == veh_accidented_id:
+            settings.buffer_vehicles_accidenteds[key]['veh_emergency_id'] = veh_emergency_id
+
+    settings.buffer_schedule_to_dispatch_emergency_vehicle.append({
+        'accident': accident,
+        'time': traci.simulation.getTime()+settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE,
+    })
+    print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has been scheduled to help vehicle {veh_accidented_id}')
+
+
+def scan_schedule_to_dispatch_emergency_vehicle():
+    for key in range(len(settings.buffer_schedule_to_dispatch_emergency_vehicle) - 1, -1, -1):
+        schedule = settings.buffer_schedule_to_dispatch_emergency_vehicle[key]
+        if schedule['time'] <= traci.simulation.getTime():
+            accident = schedule['accident']
+            settings.buffer_schedule_to_dispatch_emergency_vehicle.pop(key)
+            dispatch_emergency_vehicle(accident=accident)
+
+
+def dispatch_emergency_vehicle(accident):
+    emergency_route_id = f"rou_emergency_{traci.simulation.getTime()}"
+    # veh_emergency_id = f"veh_emergency_{traci.simulation.getTime()}"
+    veh_emergency_id = accident['veh_emergency_id']
+    veh_accidented_id = accident['veh_accidented_id']
+    accidented_road_id = accident['accidented_road_id']
+    severity = accident['severity']    
     
     arrival_pos = traci.vehicle.getLanePosition(veh_accidented_id)
     route_to_accident = traci.simulation.findRoute(
@@ -67,11 +94,8 @@ def add_emergency_vehicle(veh_accidented_id, accidented_road_id, severity):
         'departure_time': traci.simulation.getTime(),
         'time_arrival': None
     })
-    for key, veh_accidented in enumerate(settings.buffer_vehicles_accidenteds):
-        if veh_accidented['veh_accidented_id'] == veh_accidented_id:
-            settings.buffer_vehicles_accidenteds[key]['veh_emergency_id'] = veh_emergency_id
     print(
-        f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has been added to help vehicle '
+        f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has been dispatched to help vehicle '
         f'{veh_accidented_id} in road {accidented_road_id} with severity {severity}'
     )
 

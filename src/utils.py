@@ -4,10 +4,10 @@ import xml.etree.ElementTree as ET
 from config import settings
 
 
-def generate_routefile(route_filepath: str, trips_filepath: str, TRIPS_REPETITION_RATE):
+def generate_routefile(route_filepath: str, trips_filepath: str, trips_repetition_rate: float, seed: int):
     road_filepath = "data/road.net.xml"
     route_filepath = f"data/{route_filepath}"
-    cmd = f"python {os.environ['SUMO_HOME']}/tools/randomTrips.py -n {road_filepath} -r {route_filepath} -o {trips_filepath} --seed 42 --validate --fringe-factor 1000 -p {TRIPS_REPETITION_RATE}"
+    cmd = f"python {os.environ['SUMO_HOME']}/tools/randomTrips.py -n {road_filepath} -r {route_filepath} -o {trips_filepath} --seed {seed} --validate --fringe-factor 1000 -p {trips_repetition_rate}"
     cmd_list = cmd.split(" ")
     subprocess.run(cmd_list, check=True)
 

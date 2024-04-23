@@ -2,7 +2,7 @@ from config import (
     traci,
     settings,
 )
-
+from emergency_call import scan_schedule_to_dispatch_emergency_vehicle
 
 def speed_road_recovery(accidented_road_id):
     can_increase_max_speed = True
@@ -31,6 +31,7 @@ def remove_vehicle_from_accident(veh_accidented_id):
 
 
 def monitor_emergency_vehicles():
+    scan_schedule_to_dispatch_emergency_vehicle()
     monitor_emergency_vehicles_on_the_way()
     monitor_emergency_vehicles_in_the_accident()
     monitor_emergency_vehicles_to_the_hospital()
@@ -72,7 +73,8 @@ def monitor_emergency_vehicles_in_the_accident():
                 # traci.vehicle.changeTarget(veh_emergency_id, hospital_pos_end)
                 settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.TO_THE_HOSPITAL.value
                 speed_road_recovery(accidented_road_id)
-                traci.vehicle.setSpeed(veh_emergency_id, -1)
+                # traci.vehicle.setSpeed(veh_emergency_id, -1)
+                # traci.vehicle.setAcceleration(veh_emergency_id, 50, 0)
                 # traci.vehicle.setSpeedMode(veh_emergency_id, 0)
                 print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left the accident')
 
@@ -89,7 +91,9 @@ def monitor_emergency_vehicles_on_the_way():
                 distance = traci.vehicle.getDrivingDistance(veh_emergency_id, actual_road, arrival_pos)
                 if  distance < settings.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT:
                     # stop emergency vehicle for some duration
-                    traci.vehicle.setSpeedMode(veh_emergency_id, 31)
-                    traci.vehicle.setSpeed(veh_emergency_id, 0)
+                    # traci.vehicle.setStop(vehID=veh_emergency_id, edgeID=actual_road, laneIndex=1, pos=arrival_pos, duration=settings.MAX_STOP_DURATION)
+                    # traci.vehicle.setSpeedMode(veh_emergency_id, 31)
+                    # traci.vehicle.setSpeed(veh_emergency_id, 0)
+                    # traci.vehicle.setAcceleration(vehID=veh_emergency_id, acceleration=0, duration=settings.MAX_STOP_DURATION)
                     settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.IN_THE_ACCIDENT.value
                     print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has arrived at the accident')

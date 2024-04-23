@@ -6,7 +6,10 @@ import xml.etree.ElementTree as ET
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import settings
 
-def emission_xml_to_csv(xml_file, csv_file, algorithm, proportion_delay_call_emergency_vehicle_to_accident, trips_repetition_rate, simulation_end_time):
+def emission_xml_to_csv(xml_file, csv_file):
+    print(f'emission_xml_to_csv - seed: {settings.SEED}')
+    print(f'emission_xml_to_csv - trips_repetition_rate: {settings.TRIPS_REPETITION_RATE}')
+    print(f'emission_xml_to_csv - simulation_end_time: {settings.SIMULATION_END_TIME}')
     # Parse the XML file
     tree = ET.parse(xml_file)
     root = tree.getroot()
@@ -22,11 +25,12 @@ def emission_xml_to_csv(xml_file, csv_file, algorithm, proportion_delay_call_eme
             for vehicle in timestep.findall('vehicle'):
                 # Combine the time attribute with vehicle attributes
                 vehicle_data = vehicle.attrib
+                vehicle_data['seed'] = settings.SEED
                 vehicle_data['time'] = time
-                vehicle_data['ALGORITHM'] = algorithm
-                vehicle_data['PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT'] = proportion_delay_call_emergency_vehicle_to_accident
-                vehicle_data['TRIPS_REPETITION_RATE'] = trips_repetition_rate
-                vehicle_data['SIMULATION_END_TIME'] = simulation_end_time
+                vehicle_data['ALGORITHM'] = settings.ALGORITHM
+                vehicle_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
+                vehicle_data['TRIPS_REPETITION_RATE'] = settings.TRIPS_REPETITION_RATE
+                vehicle_data['SIMULATION_END_TIME'] = settings.SIMULATION_END_TIME
 
                 # If the CSV writer hasn't been set up yet, do it with the headers
                 if csv_writer is None:
@@ -51,6 +55,7 @@ def summary_xml_to_csv(xml_file, csv_file, algorithm, proportion_delay_call_emer
         for step in root.findall('step'):
             # Combine the time attribute with vehicle attributes
             step_data = step.attrib
+            step_data['seed'] = settings.SEED
             step_data['ALGORITHM'] = algorithm
             step_data['PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT'] = proportion_delay_call_emergency_vehicle_to_accident
             step_data['TRIPS_REPETITION_RATE'] = trips_repetition_rate
@@ -80,6 +85,7 @@ def tripinfo_xml_to_csv(xml_file, csv_file, algorithm, proportion_delay_call_eme
         for tripinfo in root.findall('tripinfo'):
             # Combine the time attribute with vehicle attributes
             tripinfo_data = tripinfo.attrib
+            tripinfo_data['seed'] = settings.SEED
             tripinfo_data['ALGORITHM'] = algorithm
             tripinfo_data['PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT'] = proportion_delay_call_emergency_vehicle_to_accident
             tripinfo_data['TRIPS_REPETITION_RATE'] = trips_repetition_rate

@@ -1,17 +1,17 @@
-Nº Experimento,Incidência de Viagens Por Unidade de Tempo (trip/second),Incidência de Acidentes por ambulância (#acidentes/#ambulâncias),Tempo de Simulação (steps),Algoritmo
-1,1,1,600,default
-2,1,1,600,proposto
-3,1,1,1200,default
-4,1,1,1200,proposto
-5,1,1.2,600,default
-6,1,1.2,600,proposto
-7,1,1.2,1200,default
-8,1,1.2,1200,proposto
-9,2,1,600,default
-10,2,1,600,proposto
-11,2,1,1200,default
-12,2,1,1200,proposto
-13,2,1.2,600,default
-14,2,1.2,600,proposto
-15,2,1.2,1200,default
-16,2,1.2,1200,proposto
+Nº Experimento,Incidência de Viagens Por Unidade de Tempo (trip/second),Tempo de Bloqueio de Criação de Acidentes (steps),Tempo de Simulação (steps),Algoritmo
+1,1,75,600,default
+2,1,75,600,proposto
+3,1,75,1200,default
+4,1,75,1200,proposto
+5,1,150,600,default
+6,1,150,600,proposto
+7,1,150,1200,default
+8,1,150,1200,proposto
+9,2,75,600,default
+10,2,75,600,proposto
+11,2,75,1200,default
+12,2,75,1200,proposto
+13,2,150,600,default
+14,2,150,600,proposto
+15,2,150,1200,default
+16,2,150,1200,proposto

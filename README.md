@@ -14,7 +14,7 @@ Cenário:
 
   TODO: para apresentação
    - [x] - Terminar o green wave
-   - [ ] - fix accident
+   - [X] - fix accident
 
   TODO
    - [ ] article: Analysis and modelling of road traffic using SUMO tooptimize the arrival time of emergency vehicles
@@ -56,7 +56,9 @@ dados abertos sobre a malha rodoviária de brasília - https://geoservicos.detra
 0.1 - $SUMO_HOME = "C:\Users\Alexandre Cury\miniconda3\envs\sumo-env\Lib\site-packages\sumo"
 0.2 - export SUMO_HOME="/home/acll/miniconda3/envs/sumo-env/lib/python3.11/site-packages/sumo"
 
-1 - netgenerate --grid --grid.number=4 --grid.length=150 --default.lanenumber 2 --default-junction-type traffic_light --output-file=road.net.xml --no-turnarounds true 
+1 - netgenerate --grid --grid.number=4 --grid.length=150 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true 
+  1.1 - to save
+  netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true 
 
 2.0 - python $SUMO_HOME/tools/randomTrips.py -n road.net.xml -r route.rou.xml --seed 42 --validate --fringe-factor 1000 -p 1
 2.1 - python $SUMO_HOME/tools/randomTrips.py -n road.net.xml -r route.rou.xml --seed 42 --validate --fringe-factor 1000 -p 2

@@ -35,13 +35,13 @@ class StatusEnum(str, Enum):
 class Config:
     def __init__(self):
         # args to run 
-        # self.PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT = 1.2
-        # self.SIMULATION_END_TIME = 1600
-        # self.TRIPS_REPETITION_RATE = 1
-        # self.ALGORITHM = 'proposto'
-        self.INTERVAL_ACCIDENT_TIME = 150
-        # self.INTERVAL_CALL_EMERGENCY_VEHICLE_TIME = self.INTERVAL_ACCIDENT_TIME * self.PROPORTION_DELAY_CALL_EMERGENCY_VEHICLE_TO_ACCIDENT
-        self.LANE_LENGTH = 150.0
+        self.SIMULATION_END_TIME = 1600
+        self.TRIPS_REPETITION_RATE = 1
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 100.0
+        self.ALGORITHM = 'proposto'
+        self.SEED: int = 99
+        self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 5
+        self.LANE_LENGTH = 200.0
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
         self.TLJ_PHASE_GREEN_DURATION = 5.0
         self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 7.0 # Seconds
@@ -51,11 +51,11 @@ class Config:
         self.HOSPITAL_POS_START = 'A1B1'
         self.HOSPITAL_POS_END = 'B1A1'
         self.ELIGIBLE_ACCIDENTED_ROADS = ['D2C2', 'B3B2', 'C1C0', 'A3A2', 'B2C2', 'B0A0']
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 100.0
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
         self.buffer_tls_on_green_wave = []
         self.buffer_tls_on_transition = []
+        self.buffer_schedule_to_dispatch_emergency_vehicle = []
         
         self.SeverityEnum = SeverityEnum
         self.StatusEnum = StatusEnum
