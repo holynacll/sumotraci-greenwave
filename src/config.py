@@ -46,7 +46,7 @@ class Config:
         self.TLJ_PHASE_GREEN_DURATION = 5.0
         self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 7.0 # Seconds
         self.MAX_STOP_DURATION = 10 # not working
-        self.MAX_SPEED_ROAD_RECOVERED = 50
+        self.MAX_SPEED_ROAD_RECOVERED = 13.89 # The default speed on an edge (in m/s); default: 13.89
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0
         self.HOSPITAL_POS_START = 'A1B1'
         self.HOSPITAL_POS_END = 'B1A1'

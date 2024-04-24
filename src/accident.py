@@ -13,9 +13,10 @@ def assign_random_severity():
     global counter_assign_random_severity
     counter_assign_random_severity += 1
     random.seed(settings.SEED)
-    print(f'settings seed accident.py - {settings.SEED}')
     severity_values = list(settings.SeverityEnum)
-    return [severity.value for severity in random.sample(severity_values, len(severity_values))][(counter_assign_random_severity - 1) % len(severity_values)]
+    sample_severity_values = [severity.value for severity in random.sample(severity_values, len(severity_values))]
+    print(sample_severity_values)
+    return sample_severity_values[(counter_assign_random_severity - 1) % len(severity_values)]
 
 
 def add_counter_accidents():

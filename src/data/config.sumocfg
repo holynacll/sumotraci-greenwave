@@ -1,12 +1,12 @@
 <configuration>
     <files>
         <net-file value="road.net.xml" />
-        <route-files value="route_8.rou.xml" />
-        <summary value="summary_8.xml" />
+        <route-files value="route.rou.xml" />
+        <summary value="summary.xml" />
     </files>
     <process>
         <begin value="0" />
-        <time-to-teleport value="-1" />
+        <time-to-teleport value="300" />
     </process>
     <reports>
         <no-warnings value="True" />

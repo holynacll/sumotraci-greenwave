@@ -1,12 +1,15 @@
 import os
+import time
 import sys
+import pathlib
 import pandas as pd
 import subprocess
 import concurrent.futures
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import settings
-from src.transform.xml_to_csv import emission_xml_to_csv, summary_xml_to_csv
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# from config import settings
+# from src.transform.xml_to_csv import emission_xml_to_csv, summary_xml_to_csv
+from merge_csvs import merge_csvs
 
 def run_simulation(
     seed: int,
@@ -36,6 +39,8 @@ def run_simulation(
         '--TRIPS_REPETITION_RATE', TRIPS_REPETITION_RATE,
         '--ALGORITHM', ALGORITHM,
     ])
+    return pathlib.Path(f'{os.getcwd()}/data/{emissions_filename[:-4]}.csv').resolve()
+
 
 def main():
     seeds = [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
@@ -74,13 +79,20 @@ def main():
                     ALGORITHM=ALGORITHM,
                 )
                 futures.append(future)
-                
+
+            file_list = []
             for future in concurrent.futures.as_completed(futures):
                 try:
                     result = future.result()
                     print("Result:", result)
+                    file_list.append(result)
                 except Exception as exc:
                     raise(f'On index {index} generated an exception: {exc}')
+            # Merge CSVs
+            merge_csvs(file_list, f'{os.getcwd()}/output', f'seed_{seed}.csv')
+        print(f'Seed {seed} executed successfully')
+    return 'All seeds executed successfully'
+
 
 if __name__ == '__main__':
     main()

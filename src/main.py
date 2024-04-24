@@ -5,6 +5,7 @@ from config import (
     settings,
 )
 import os
+import pathlib
 import optparse
 import traceback
 
@@ -127,19 +128,20 @@ if __name__ == "__main__":
     traci.start([
         sumoBinary,
         "-c", options.sumocfg_filepath,
+        "--lateral-resolution", "0.8",
         "--emission-output", f'data/{options.emissions_filepath}',
-         "--tripinfo-output", f'data/{options.tripinfo_filepath}',
+        #  "--tripinfo-output", f'data/{options.tripinfo_filepath}',
         "-S", "-Q",
     ])
         
     run()
     
     print('Generating CSV files...')
-    results_dir = f'data/results-{settings.SEED}'
-    os.makedirs(results_dir, exist_ok=True)
+    # results_dir = f'data/results-{settings.SEED}'
+    # os.makedirs(results_dir, exist_ok=True)
     emission_xml_to_csv(
         f'data/{options.emissions_filepath}',
-        f'{results_dir}/{options.emissions_filepath[:-4]}.csv',
+        f'data/{options.emissions_filepath[:-4]}.csv',
         # algorithm,
         # # proportion_delay_call_emergency_vehicle_to_accident,
         # trips_repetition_rate,
