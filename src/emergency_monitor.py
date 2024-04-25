@@ -86,7 +86,10 @@ def monitor_emergency_vehicles_on_the_way():
         arrival_pos = emergency_vehicle['arrival_pos']
         status = emergency_vehicle['status']
         if status == settings.StatusEnum.ON_THE_WAY.value:
-            actual_road = traci.vehicle.getRoadID(veh_emergency_id)
+            try:
+                actual_road = traci.vehicle.getRoadID(veh_emergency_id)
+            except traci.TraCIException:
+                actual_road = None
             if actual_road == accidented_road_id:
                 distance = traci.vehicle.getDrivingDistance(veh_emergency_id, actual_road, arrival_pos)
                 if  distance < settings.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT:

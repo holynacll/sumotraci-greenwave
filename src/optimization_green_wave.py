@@ -1,4 +1,3 @@
-from rich import print
 from config import (
     traci,
     settings,
@@ -14,16 +13,19 @@ def improve_traffic_for_emergency_vehicle():
     for emergency_vehicle in emergency_vehicles_sorted_by_severity_and_most_recent:
         veh_emergency_id = emergency_vehicle['veh_emergency_id']
         severity = emergency_vehicle['severity']
-        next_tls_set = traci.vehicle.getNextTLS(veh_emergency_id)
+        try:
+            next_tls_set = traci.vehicle.getNextTLS(veh_emergency_id)
+        except traci.TraCIException:
+            continue
         remove_remaining_tls_on_green_wave(veh_emergency_id, next_tls_set)
         for tls in next_tls_set:
             tls_id = tls[0]
             tls_state = tls[3]
             vehicle_distance_to_tls = tls[2]
             if vehicle_distance_to_tls <= settings.VEHICLE_DISTANCE_TO_TLS:
-                print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is close to TLS {tls_id}')
-                print(f'buffer_tls_on_transition: {settings.buffer_tls_on_transition}')
-                print(f'buffer_tls_on_green_wave: {settings.buffer_tls_on_green_wave}')
+                # print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is close to TLS {tls_id}')
+                # print(f'buffer_tls_on_transition: {settings.buffer_tls_on_transition}')
+                # print(f'buffer_tls_on_green_wave: {settings.buffer_tls_on_green_wave}')
                 # se tls já está alocado para algum veículo de emergência mais grave
                 if is_tls_allocated_to_a_more_serious_emergency_vehicle(
                     tls_id=tls_id,
@@ -70,7 +72,7 @@ def is_tls_allocated_to_a_more_serious_emergency_vehicle(
     for key, tls_on_green_wave in enumerate(settings.buffer_tls_on_green_wave):
         if tls_on_green_wave['tls_id'] == tls_id:
             # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
-            if tls_on_green_wave and tls_on_green_wave['veh_emergency_id'] != veh_emergency_id:
+            if tls_on_green_wave['veh_emergency_id'] != veh_emergency_id:
                 if settings.severity_order[tls_on_green_wave['severity']] < settings.severity_order[severity]:
                     settings.buffer_tls_on_green_wave.pop(key)
                     return False
@@ -82,11 +84,11 @@ def remove_remaining_tls_on_green_wave(veh_emergency_id, next_tls_set):
     for key in range(len(settings.buffer_tls_on_green_wave) - 1, -1, -1):
         tls_on_green_wave = settings.buffer_tls_on_green_wave[key]
         if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
-            print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is not close to TLS {tls_on_green_wave["tls_id"]} - next_tls_set: {next_tls_set}')
+            # print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is not close to TLS {tls_on_green_wave["tls_id"]} - next_tls_set: {next_tls_set}')
             if not any(
                 tls[0] == tls_on_green_wave['tls_id'] and
                 tls[2] <= settings.VEHICLE_DISTANCE_TO_TLS
                 for tls in next_tls_set
             ):
                 settings.buffer_tls_on_green_wave.pop(key)
-                print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left TLS {tls_on_green_wave["tls_id"]}')
+                # print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left TLS {tls_on_green_wave["tls_id"]}')
