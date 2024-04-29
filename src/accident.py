@@ -156,6 +156,7 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
         {
             'veh_accidented_id': veh_accidented_id,
             'accidented_road_id': accidented_road_id,
+            'lane_accidented_id': traci.vehicle.getLaneID(veh_accidented_id),
             'severity': severity,
             'time_accident': traci.simulation.getTime(),
             'time_recovered': None,

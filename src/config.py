@@ -35,10 +35,10 @@ class StatusEnum(str, Enum):
 class Config:
     def __init__(self):
         # args to run 
-        self.SIMULATION_END_TIME = 1600
-        self.TRIPS_REPETITION_RATE = 1
+        self.SIMULATION_END_TIME = 1600.0
+        self.TRIPS_REPETITION_RATE = 0.75
         self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 100.0
-        self.ALGORITHM = 'proposto'
+        self.ALGORITHM = 'proposto' # default or proposto
         self.SEED: int = 99
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 5
         self.LANE_LENGTH = 200.0
@@ -50,7 +50,7 @@ class Config:
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0
         self.HOSPITAL_POS_START = 'A1B1'
         self.HOSPITAL_POS_END = 'B1A1'
-        self.ELIGIBLE_ACCIDENTED_ROADS = ['D2C2', 'B3B2', 'C1C0', 'A3A2', 'B2C2', 'B0A0']
+        self.ELIGIBLE_ACCIDENTED_ROADS = ['D2C2', 'B3B2', 'C1C0', 'B2C2', 'B0A0']
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
         self.buffer_tls_on_green_wave = []

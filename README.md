@@ -43,6 +43,7 @@ Cenário:
    - [x] configurar parada do veículo de emergência no local do acidente
    - [ ] customizar/alternar algoritmos de roteamento
    - [ ] Green-Wave Traffic Theory Optimization and Analysis
+   - [ ] Detectores para simular RSUs (ao inves de ter uma solução de monitoramento global, seria monitorando os VEs que estivessem no raio dos RSUs)
 
 var resposta
 meanSpeedRelative (velecidade media / velocida permitida)
@@ -59,8 +60,11 @@ dados abertos sobre a malha rodoviária de brasília - https://geoservicos.detra
 
 1 - netgenerate --grid --grid.number=4 --grid.length=150 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true 
   1.1 - to save
-  netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true 
-  1.2 - netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --no-internal-link
+  netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --default.priority 1
+  1.2 - netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --no-left-connections true 
+  --fringe.guess true --fringe.guess.speed-threshold 5.5
+  <!-- netgenerate --rand --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --no-left-connections true  -->
+  <!-- --no-internal-link -->
 
 2.0 - python $SUMO_HOME/tools/randomTrips.py -n road.net.xml -r route.rou.xml --seed 42 --validate --fringe-factor 1000 -p 1
 2.1 - python $SUMO_HOME/tools/randomTrips.py -n road.net.xml -r route.rou.xml --seed 42 --validate --fringe-factor 1000 -p 2

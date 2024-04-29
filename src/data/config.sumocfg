@@ -6,7 +6,7 @@
     </files>
     <process>
         <begin value="0" />
-        <time-to-teleport value="300" />
+        <time-to-teleport value="-1" />
     </process>
     <reports>
         <no-warnings value="True" />

@@ -17,7 +17,7 @@ def generate_routefile(route_filepath: str, trips_filepath: str, trips_repetitio
 
     # Create emergency vehicle type and add it to the XML route file
     new_element = ET.fromstring("""
-    <vType id="emergency_emergency" vClass="emergency" color="red" speedFactor="1.5">
+    <vType id="emergency_emergency" vClass="emergency" color="red" speedFactor="1.2">
         <param key="has.bluelight.device" value="true"/>
     </vType>
     """)

@@ -32,9 +32,41 @@ def remove_vehicle_from_accident(veh_accidented_id):
 
 def monitor_emergency_vehicles():
     scan_schedule_to_dispatch_emergency_vehicle()
+    monitor_accidented_vehicle()
     monitor_emergency_vehicles_on_the_way()
     monitor_emergency_vehicles_in_the_accident()
     monitor_emergency_vehicles_to_the_hospital()
+
+
+def monitor_accidented_vehicle():
+    for key, accidented_vehicle in enumerate(settings.buffer_vehicles_accidenteds):
+        veh_accidented_id = accidented_vehicle['veh_accidented_id']
+        lane_accidented_id = accidented_vehicle['lane_accidented_id']
+        # accidented_road_id = accidented_vehicle['accidented_road_id']
+        # accidented_time = accidented_vehicle['accidented_time']
+        vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 3.0)
+        vehicle_follower_id = vehicle_follower_obj[0]
+        vehicle_follower_distance = vehicle_follower_obj[1]
+        if vehicle_follower_distance > 0.0 and vehicle_follower_distance <= 3.0:
+            actual_lane = traci.vehicle.getLaneID(vehicle_follower_id)
+            if lane_accidented_id == actual_lane:
+                # print(vehicle_follower_obj)
+                lane_index = int(lane_accidented_id.split('_')[1])
+                if lane_index == 0:
+                    lane_index = 1
+                else:
+                    lane_index = 0
+                traci.vehicle.changeLane(vehicle_follower_id, lane_index, 3.0)
+                # print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} - follower {vehicle_follower_id} - lane {lane_accidented_id}')
+        # duration = accidented_vehicle['duration']
+        # if duration > 0:
+        #     duration -= 1
+        #     settings.buffer_vehicles_accidenteds[key]['duration'] = duration
+        # else:
+        #     remove_vehicle_from_accident(veh_accidented_id)
+        #     speed_road_recovery(accidented_road_id)
+        #     settings.buffer_vehicles_accidenteds.pop(key)
+        #     print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
 
 
 def monitor_emergency_vehicles_to_the_hospital():

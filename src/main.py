@@ -41,7 +41,6 @@ def run():
     #     junctionID, tc.CMD_GET_VEHICLE_VARIABLE, 1000000,
     #     [tc.VAR_SPEED, tc.VAR_ALLOWED_SPEED]
     # )
-
     try:
         while shouldContinueSim():
             traci.simulationStep()
@@ -51,7 +50,7 @@ def run():
             if traci.simulation.getTime()%10 == 0:
                 call_emergency_vehicle()
             if settings.ALGORITHM == 'proposto':
-                improve_traffic_on_accidented_road() # reroute vehicles to avoid of the aciddented road
+                # improve_traffic_on_accidented_road() # reroute vehicles to avoid of the aciddented road
                 improve_traffic_for_emergency_vehicle() # green wave solution
             # get_statistics_from_timeloss_and_halting(junctionID)
             step += 1

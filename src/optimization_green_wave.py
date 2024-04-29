@@ -23,9 +23,9 @@ def improve_traffic_for_emergency_vehicle():
             tls_state = tls[3]
             vehicle_distance_to_tls = tls[2]
             if vehicle_distance_to_tls <= settings.VEHICLE_DISTANCE_TO_TLS:
-                # print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is close to TLS {tls_id}')
-                # print(f'buffer_tls_on_transition: {settings.buffer_tls_on_transition}')
-                # print(f'buffer_tls_on_green_wave: {settings.buffer_tls_on_green_wave}')
+                print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is close to TLS {tls_id}')
+                print(f'buffer_tls_on_transition: {settings.buffer_tls_on_transition}')
+                print(f'buffer_tls_on_green_wave: {settings.buffer_tls_on_green_wave}')
                 # se tls já está alocado para algum veículo de emergência mais grave
                 if is_tls_allocated_to_a_more_serious_emergency_vehicle(
                     tls_id=tls_id,
