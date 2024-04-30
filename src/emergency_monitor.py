@@ -3,6 +3,7 @@ from config import (
     settings,
 )
 from emergency_call import scan_schedule_to_dispatch_emergency_vehicle
+from optimization_green_wave import remove_remaining_tls_on_green_wave
 
 def speed_road_recovery(accidented_road_id):
     can_increase_max_speed = True
@@ -80,11 +81,13 @@ def monitor_emergency_vehicles_to_the_hospital():
             if actual_road == hospital_pos_end:
                 settings.buffer_emergency_vehicles.pop(key)
                 # traci.vehicle.remove(veh_emergency_id)
-                # remove tls alocados para esse veículo de emergência
-                for key in range(len(settings.buffer_tls_on_green_wave) - 1, -1, -1):
-                    tls_on_green_wave = settings.buffer_tls_on_green_wave[key]
-                    if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
-                        settings.buffer_tls_on_green_wave.pop(key)
+                remove_remaining_tls_on_green_wave(veh_emergency_id, [])
+                # # remove tls alocados para esse veículo de emergência
+                # for key in range(len(settings.buffer_tls_on_green_wave) - 1, -1, -1):
+                #     tls_on_green_wave = settings.buffer_tls_on_green_wave[key]
+                #     if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
+                #         traci.trafficlight.setProgram(tls_on_green_wave['tls_id'], tls_on_green_wave['original_tl_program'])
+                #         settings.buffer_tls_on_green_wave.pop(key)
                 print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has arrived at the hospital')
 
 
