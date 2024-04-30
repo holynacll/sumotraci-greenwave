@@ -3,7 +3,7 @@ from config import (
     settings,
 )
 from emergency_call import scan_schedule_to_dispatch_emergency_vehicle
-from optimization_green_wave import remove_remaining_tls_on_green_wave
+# from optimization_green_wave import remove_remaining_tls_on_green_wave
 
 def speed_road_recovery(accidented_road_id):
     can_increase_max_speed = True
@@ -33,13 +33,13 @@ def remove_vehicle_from_accident(veh_accidented_id):
 
 def monitor_emergency_vehicles():
     scan_schedule_to_dispatch_emergency_vehicle()
-    monitor_accidented_vehicle()
+    monitor_change_lane_accidented_vehicle()
     monitor_emergency_vehicles_on_the_way()
     monitor_emergency_vehicles_in_the_accident()
     monitor_emergency_vehicles_to_the_hospital()
 
 
-def monitor_accidented_vehicle():
+def monitor_change_lane_accidented_vehicle():
     for key, accidented_vehicle in enumerate(settings.buffer_vehicles_accidenteds):
         veh_accidented_id = accidented_vehicle['veh_accidented_id']
         lane_accidented_id = accidented_vehicle['lane_accidented_id']
@@ -81,7 +81,7 @@ def monitor_emergency_vehicles_to_the_hospital():
             if actual_road == hospital_pos_end:
                 settings.buffer_emergency_vehicles.pop(key)
                 # traci.vehicle.remove(veh_emergency_id)
-                remove_remaining_tls_on_green_wave(veh_emergency_id, [])
+                # remove_remaining_tls_on_green_wave(veh_emergency_id, [])
                 # # remove tls alocados para esse veículo de emergência
                 # for key in range(len(settings.buffer_tls_on_green_wave) - 1, -1, -1):
                 #     tls_on_green_wave = settings.buffer_tls_on_green_wave[key]

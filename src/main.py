@@ -127,7 +127,7 @@ if __name__ == "__main__":
     traci.start([
         sumoBinary,
         "-c", options.sumocfg_filepath,
-        "--lateral-resolution", "0.8",
+        "--lateral-resolution", "1.8",
         "--emission-output", f'data/{options.emissions_filepath}',
         #  "--tripinfo-output", f'data/{options.tripinfo_filepath}',
         "-S", "-Q",
