@@ -55,10 +55,13 @@ def run():
             # get_statistics_from_timeloss_and_halting(junctionID)
             step += 1
             # print(f'Step: {step} - Time: {traci.simulation.getTime()}', end='\r')
-            if traci.simulation.getTime() > settings.SIMULATION_END_TIME:
-                break
+            # if traci.simulation.getTime() > settings.SIMULATION_END_TIME:
+            #     break
         # get_network_parameters()
         traci.close()
+        print('Simulation finished!')
+        print(f'Saveds: {settings.count_saveds}')
+        print(f'Unsaveds: {settings.count_accidents - settings.count_saveds}')
     except Exception as e:
         print(traceback.format_exc())
 
@@ -68,7 +71,7 @@ def get_options():
     optParser.add_option("--nogui", action="store_true",
                          default=False, help="run the commandline version of sumo")
     optParser.add_option("--seed", type="str",
-                         default="42", help="define the seed for random number generator")
+                         default=settings.SEED, help="define the seed for random number generator")
     optParser.add_option("--sumocfg_filepath", type="string",
                          default="data/config.sumocfg", help="define the sumoconfig file path")
     optParser.add_option("--route_filepath", type="string",
@@ -130,7 +133,8 @@ if __name__ == "__main__":
         "--lateral-resolution", "1.8",
         "--emission-output", f'data/{options.emissions_filepath}',
         #  "--tripinfo-output", f'data/{options.tripinfo_filepath}',
-        "-S", "-Q",
+        "-S",
+        "-Q",
     ])
         
     run()

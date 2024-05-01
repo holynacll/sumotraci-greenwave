@@ -92,7 +92,8 @@ def dispatch_emergency_vehicle(accident):
         'status': settings.StatusEnum.ON_THE_WAY.value,
         'duration': settings.MAX_STOP_DURATION,
         'departure_time': traci.simulation.getTime(),
-        'time_arrival': None
+        'time_arrival': None,
+        'vehicle_removed': False,
     })
     print(
         f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has been dispatched to help vehicle '

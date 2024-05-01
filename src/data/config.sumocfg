@@ -9,6 +9,7 @@
         <time-to-teleport value="-1" />
     </process>
     <reports>
+        <verbose value="True" />
         <no-warnings value="True" />
     </reports>
 </configuration>

@@ -4,7 +4,6 @@ from config import (
     settings,
 )
 
-counter_accidents = 0
 counter_tries_to_create = 0
 sum_time_to_block_create_accidents = 0.0
 counter_assign_random_severity = 0
@@ -20,8 +19,7 @@ def assign_random_severity():
 
 
 def add_counter_accidents():
-    global counter_accidents
-    counter_accidents += 1
+    settings.count_accidents += 1
 
 
 def add_counter_tries_to_create():
