@@ -7,9 +7,21 @@ from config import settings
 def generate_routefile(route_filepath: str, trips_filepath: str, trips_repetition_rate: float, seed: int):
     road_filepath = "data/road.net.xml"
     route_filepath = f"data/{route_filepath}"
-    cmd = f"python {os.environ['SUMO_HOME']}/tools/randomTrips.py -n {road_filepath} -r {route_filepath} -o {trips_filepath} --seed {seed} --validate --fringe-factor 1000 -p {trips_repetition_rate}"
+    # trip_attributes = r"--trip-attributes='color=\"0,0,1\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"5\" minGap=\"2.5\" maxSpeed=\"16.67\" guiShape=\"passenger\" lcStrategic=\"0.5\"'"
+    trip_attributes_1 = 'departLane="best"'
+    trip_attributes_2 = 'lcStrategic="0.5"'
+    cmd = (
+        f"python {os.environ['SUMO_HOME']}/tools/randomTrips.py -n {road_filepath} -r {route_filepath}"
+        f" -o {trips_filepath} --seed {seed} --validate --fringe-factor 1000 -p {trips_repetition_rate}"
+        f" --vehicle-class passenger"
+        f" --trip-attributes '{trip_attributes_1}'"
+        f" --trip-attributes '{trip_attributes_2}'"
+        # r"--trip-attributes=\'color=\"0,0,1\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"5\" ' "
+        # r'minGap=\"2.5\" maxSpeed=\"16.67\" guiShape=\"passenger\" lcStrategic=\"0.5\" '
+    )
     cmd_list = cmd.split(" ")
-    subprocess.run(cmd_list, check=True)
+    os.system(cmd)
+    # subprocess.run(cmd_list, check=True)
 
     # Parse the existing XML route file
     tree = ET.parse(route_filepath)
