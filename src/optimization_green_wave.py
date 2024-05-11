@@ -112,13 +112,13 @@ def green_wave_initial_transition(key: str):
     ryg_state: str = ''
     for index, lane in enumerate(controlled_lanes):
         lane_state = tls_state[index]
-        if first_edge_on_route_to_reach_tls_id in lane:
-            if lane_state == 'G':
-                ryg_state += 'G'
+        if first_edge_on_route_to_reach_tls_id in lane and lane_state in ('g', 'G'):
+            ryg_state += 'G'
+        elif lane_state in ('g', 'G'):
+            ryg_state += 'y'
         else:
-            if lane_state == 'G':
-                ryg_state += 'y'
-        ryg_state += lane_state
+            ryg_state += lane_state
+    print(ryg_state)
     traci.trafficlight.setRedYellowGreenState(tls_id, ryg_state)
     settings.buffer_tls_on_green_wave[key]['ryg_state'] = ryg_state
     settings.buffer_tls_on_green_wave[key]['change_transition'] = True
@@ -150,7 +150,7 @@ def green_wave_final_transition(key: str):
     ryg_state: str = ''
     for index, lane in enumerate(controlled_lanes):
         lane_state = tls_state[index]
-        if lane_state == 'G':
+        if lane_state in ('g', 'G'):
             ryg_state += 'y'
         ryg_state += lane_state
     traci.trafficlight.setRedYellowGreenState(tls_id, ryg_state)

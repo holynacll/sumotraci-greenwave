@@ -48,13 +48,13 @@ class Config:
         self.LANE_LENGTH = 200.0
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
         self.TLJ_PHASE_GREEN_DURATION = 5.0
-        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 5.0 # Seconds
+        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 7.0 # Seconds
         self.MAX_STOP_DURATION = 10 # not working
         self.SPEED_ROAD = 13.89 # The default speed on an edge (in m/s); default: 13.89
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0
         self.HOSPITAL_POS_START = 'A1B1'
         self.HOSPITAL_POS_END = 'B1A1'
-        self.ELIGIBLE_ACCIDENTED_ROADS = ['D2C2', 'B3B2', 'A2A3', 'C1C0', 'B2C2', 'B0A0']
+        self.ELIGIBLE_ACCIDENTED_ROADS = ['D2C2', 'B3B2', 'C1C0', 'B2C2', 'B0A0']
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
         self.buffer_tls_on_green_wave = []
