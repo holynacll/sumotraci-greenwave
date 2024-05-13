@@ -60,9 +60,8 @@ dados abertos sobre a malha rodoviária de brasília - https://geoservicos.detra
 
 1 - netgenerate --grid --grid.number=4 --grid.length=150 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true 
   1.1 - to save
-  netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --default.priority 1
-  1.2 - netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true
-  --fringe.guess true --fringe.guess.speed-threshold 5.5
+  netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --no-left-connections true
+  1.2 - netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --fringe.guess true --fringe.guess.speed-threshold 5.5
   <!-- netgenerate --rand --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --no-left-connections true  -->
   <!-- --no-internal-link -->
 

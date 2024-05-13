@@ -118,7 +118,6 @@ def green_wave_initial_transition(key: str):
             ryg_state += 'y'
         else:
             ryg_state += lane_state
-    print(ryg_state)
     traci.trafficlight.setRedYellowGreenState(tls_id, ryg_state)
     settings.buffer_tls_on_green_wave[key]['ryg_state'] = ryg_state
     settings.buffer_tls_on_green_wave[key]['change_transition'] = True
@@ -172,12 +171,12 @@ def is_tls_allocated_to_a_more_serious_emergency_vehicle(
 ):
     for key, tls_on_green_wave in enumerate(settings.buffer_tls_on_green_wave):
         if tls_on_green_wave['tls_id'] == tls_id:
-            # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
+            # verifica se o veículo de emergência atual é o mesmo veículo de emergência alocado
             if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
                 return True
+            # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
             if settings.severity_order[tls_on_green_wave['severity']] > settings.severity_order[severity]:
                 return True
-                # remove_tls_on_green_wave(key)
             settings.buffer_tls_on_green_wave[key]['status'] == 'FINAL_TRANSITION'
             return True
     return False

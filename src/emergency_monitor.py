@@ -49,16 +49,19 @@ def monitor_change_lane_accidented_vehicle():
         vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 3.0)
         vehicle_follower_id = vehicle_follower_obj[0]
         vehicle_follower_distance = vehicle_follower_obj[1]
-        if vehicle_follower_distance > 0.0 and vehicle_follower_distance <= 3.0:
+        if vehicle_follower_distance > -0.01 and vehicle_follower_distance <= 3.0:
             actual_lane = traci.vehicle.getLaneID(vehicle_follower_id)
             if lane_accidented_id == actual_lane:
-                # print(vehicle_follower_obj)
+                print(vehicle_follower_obj)
                 lane_index = int(lane_accidented_id.split('_')[1])
+                print(lane_index)
                 if lane_index == 0:
                     lane_index = 1
+                elif lane_index == 2:
+                    lane_index = 1
                 else:
-                    lane_index = 0
-                traci.vehicle.changeLane(vehicle_follower_id, lane_index, 0.1)
+                    lane_index = 2
+                traci.vehicle.changeLane(vehicle_follower_id, lane_index, 2.0)
                 # print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} - follower {vehicle_follower_id} - lane {lane_accidented_id}')
         # duration = accidented_vehicle['duration']
         # if duration > 0:
