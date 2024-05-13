@@ -131,6 +131,8 @@ if __name__ == "__main__":
         sumoBinary,
         "-c", options.sumocfg_filepath,
         "--lateral-resolution", "1.8",
+        "--device.bluelight.reactiondist", "50.0",
+        # "--device.bluelight.deterministic", "true",
         "--emission-output", f'data/{options.emissions_filepath}',
         #  "--tripinfo-output", f'data/{options.tripinfo_filepath}',
         "-S",

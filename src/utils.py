@@ -50,7 +50,11 @@ def generate_routefile(route_filepath: str, trips_filepath: str, trips_repetitio
 def add_emergency_vehicle_type_to_route_file(root):
     # Create emergency vehicle type and add it to the XML route file
     new_element = ET.fromstring("""
-    <vType id="emergency_emergency" vClass="emergency" color="red" speedFactor="1.2">
+    <vType
+    id="emergency_emergency"
+    vClass="emergency"
+    color="red"
+    >
         <param key="has.bluelight.device" value="true"/>
     </vType>
     """)
@@ -65,15 +69,16 @@ def add_passenger_vehicle_type_to_route_file(root):
         id="passenger"
         vClass="passenger"
         color="yellow"
-        speedFactor="1.2"
-        tau="0.8"
         lcCooperative="1.0"
-        lcPushy="0.8"
+        lcPushy="0.2"
+        lcKeepRight="100"
+        jmIgnoreKeepClearTime="1.0"
+        jmIgnoreJunctionFoeProb="1.0"
         lcTurnAlignmentDistance="1.0"
     >
     </vType>    
     """)
-    
+
     # Insert the new element as the first child of the root
     root.insert(0, new_element)
 
@@ -85,9 +90,6 @@ def add_passenger_idm_vehicle_type_to_route_file(root):
         id="passenger_idm"
         carFollowModel="IDM"
         color="yellow"
-        lcCooperative="1.0"
-        lcTurnAlignmentDistance="1.0"
-        lcImpatience="1.0"
     >
     </vType>
     """)

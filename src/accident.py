@@ -66,67 +66,10 @@ def create_accident():
             sum_time_to_block_create_accidents = traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
             return None
 
-            
-    # accidented_road_id: str = settings.ELIGIBLE_ACCIDENTED_ROADS[counter_tries_to_create % len(settings.ELIGIBLE_ACCIDENTED_ROADS)]
-    # # se veículo escolhido foi acidentado em uma via que já está acidentada, então escolhe outro veículo
-    # if not accidented_road_is_already_accidented(accidented_road_id=accidented_road_id):
-    #     vehicle_ids = traci.edge.getLastStepVehicleIDs(edgeID=accidented_road_id)
-    #     for vehicle_id in vehicle_ids:
-    #         print(vehicle_id)
-    #         # se veículo está em uma posição válida na faixa, longe dos cruzamentos
-    #         if not vehicle_is_in_a_valid_position_lane(vehicle_id):
-    #             continue
-            
-    #         # se veículo escolhido foi um veículo de emergência
-    #         veh_accidented_type_id = traci.vehicle.getTypeID(vehicle_id)
-    #         if veh_accidented_type_id == 'emergency_emergency':
-    #             continue
-        
-    #         # se veículo escolhido foi um já acidentado
-    #         if not vehicle_is_already_considered(veh_accidented_id=vehicle_id):
-    #             continue # Sai do loop se nenhuma das condições para continuar for verdadeira
-            
-    #         add_vehicle_to_accident(vehicle_id, accidented_road_id)
-    #         return
-    # add_counter_tries_to_create()
-    # create_accident()
-
-
-# def create_random_accident():
-#     vehicles = traci.vehicle.getIDList()
-#     while True:
-#         # random.seed(42)
-#         random_number = random.randrange(0, len(vehicles))
-#         veh_accidented_id = vehicles[random_number]
-#         accidented_road_id: str = traci.vehicle.getRoadID(veh_accidented_id)
-        
-#         # se veículo escolhido foi acidentado em uma via que já está acidentada, então escolhe outro veículo
-#         if accidented_road_is_already_accidented(accidented_road_id=accidented_road_id):
-#             continue
-
-#         # se veículo escolhido está em uma junção interna da rede (não valida)
-#         if accidented_road_id.startswith(':'):
-#             continue
-        
-#         # se veículo está em uma posição válida na faixa, longe dos cruzamentos
-#         if not vehicle_is_in_a_valid_position_lane(veh_accidented_id):
-#             continue
-
-#         # se veículo escolhido foi um veículo de emergência
-#         veh_accidented_type_id = traci.vehicle.getTypeID(veh_accidented_id)
-#         if veh_accidented_type_id == 'emergency_emergency':
-#             continue
-
-#         # se veículo escolhido foi um já acidentado
-#         if not vehicle_is_already_considered(veh_accidented_id=veh_accidented_id):
-#             break # Sai do loop se nenhuma das condições para continuar for verdadeira
-
-#     add_vehicle_to_accident(veh_accidented_id, accidented_road_id)
-
 
 def vehicle_is_in_a_valid_position_lane(veh_accidented_id):
     position = traci.vehicle.getLanePosition(veh_accidented_id)
-    return position > 0.4 * settings.LANE_LENGTH and position < 0.6 * settings.LANE_LENGTH
+    return position > 0.3 * settings.LANE_LENGTH and position < 0.5 * settings.LANE_LENGTH
 
 
 def accidented_road_is_already_accidented(accidented_road_id):

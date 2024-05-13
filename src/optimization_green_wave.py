@@ -151,7 +151,8 @@ def green_wave_final_transition(key: str):
         lane_state = tls_state[index]
         if lane_state in ('g', 'G'):
             ryg_state += 'y'
-        ryg_state += lane_state
+        else:
+            ryg_state += lane_state
     traci.trafficlight.setRedYellowGreenState(tls_id, ryg_state)
     settings.buffer_tls_on_green_wave[key]['ryg_state'] = ryg_state
     settings.buffer_tls_on_green_wave[key]['change_transition'] = True

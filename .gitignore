@@ -3,3 +3,4 @@ __pycache__
 src/data
 src/plot
 src/output
+src/__pycache__

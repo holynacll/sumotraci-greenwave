@@ -5,8 +5,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import setup_environment # Carrega o ambiente de configuração
 
-os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
-# os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+# os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
+os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 
 
 if 'SUMO_HOME' in os.environ:
@@ -41,20 +41,20 @@ class Config:
         self.SIMULATION_END_TIME = 1200.0
         self.TRIPS_REPETITION_RATE = 1.0
         self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 100.0
-        self.VEHICLE_NUMBER: int = 1400
+        self.VEHICLE_NUMBER: int = 1600
         self.ALGORITHM = 'proposto' # default or proposto
         self.SEED: int = 99
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 5
-        self.LANE_LENGTH = 200.0
+        self.LANE_LENGTH = 300.0
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
         self.TLJ_PHASE_GREEN_DURATION = 5.0
-        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 8.0 # Seconds
+        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 10.0 # Seconds
         self.MAX_STOP_DURATION = 10 # not working
         self.SPEED_ROAD = 13.89 # The default speed on an edge (in m/s); default: 13.89
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0
         self.HOSPITAL_POS_START = 'A1B1'
         self.HOSPITAL_POS_END = 'B1A1'
-        self.ELIGIBLE_ACCIDENTED_ROADS = ['D2C2', 'B2C2']
+        self.ELIGIBLE_ACCIDENTED_ROADS = ['A2B2', 'A1B1']
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
         self.buffer_tls_on_green_wave = []

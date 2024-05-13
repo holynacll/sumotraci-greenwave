@@ -52,9 +52,9 @@ def monitor_change_lane_accidented_vehicle():
         if vehicle_follower_distance > -0.01 and vehicle_follower_distance <= 3.0:
             actual_lane = traci.vehicle.getLaneID(vehicle_follower_id)
             if lane_accidented_id == actual_lane:
-                print(vehicle_follower_obj)
+                # print(vehicle_follower_obj)
                 lane_index = int(lane_accidented_id.split('_')[1])
-                print(lane_index)
+                # print(lane_index)
                 if lane_index == 0:
                     lane_index = 1
                 elif lane_index == 2:
