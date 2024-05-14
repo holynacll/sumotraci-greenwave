@@ -58,7 +58,7 @@ dados abertos sobre a malha rodoviária de brasília - https://geoservicos.detra
 0.1 - $SUMO_HOME = "C:\Users\Alexandre Cury\miniconda3\envs\sumo-env\Lib\site-packages\sumo"
 0.2 - export SUMO_HOME="/home/acll/miniconda3/envs/sumo-env/lib/python3.11/site-packages/sumo"
 
-1 - netgenerate --grid --grid.number=3 --grid.length=300 --grid.attach-length 200 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true 
+1 - netgenerate --grid --grid.number=4 --grid.length=500 --default.lanenumber 3 --default.connection-length 100.0 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --junctions.join-turns true --junctions.scurve-stretch 100.0
   1.1 - to save
   netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --no-left-connections true
   1.2 - netgenerate --grid --grid.number=4 --grid.length=200 --default.lanenumber 2 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true --fringe.guess true --fringe.guess.speed-threshold 5.5

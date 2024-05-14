@@ -4,18 +4,14 @@ from config import (
     settings,
 )
 
-counter_tries_to_create = 0
-sum_time_to_block_create_accidents = 0.0
-counter_assign_random_severity = 0
 
 def assign_random_severity():
-    global counter_assign_random_severity
-    counter_assign_random_severity += 1
+    settings.counter_assign_random_severity += 1
     random.seed(settings.SEED)
     severity_values = list(settings.SeverityEnum)
     sample_severity_values = [severity.value for severity in random.sample(severity_values, len(severity_values))]
     print(sample_severity_values)
-    return sample_severity_values[(counter_assign_random_severity - 1) % len(severity_values)]
+    return sample_severity_values[(settings.counter_assign_random_severity - 1) % len(severity_values)]
 
 
 def add_counter_accidents():
@@ -23,16 +19,14 @@ def add_counter_accidents():
 
 
 def add_counter_tries_to_create():
-    global counter_tries_to_create
-    counter_tries_to_create += 1
+    settings.counter_tries_to_create += 1
 
 
 def create_accident():
     # se o tempo de bloqueio de criar acidentes for maior que o tempo de simulação, então não cria acidente
-    global sum_time_to_block_create_accidents, counter_tries_to_create
     add_counter_tries_to_create()
 
-    if traci.simulation.getTime() < sum_time_to_block_create_accidents:
+    if traci.simulation.getTime() < settings.sum_time_to_block_create_accidents:
         return
 
     # se já atingiu o limite de acidentes, então não cria mais acidentes
@@ -40,7 +34,7 @@ def create_accident():
         return
 
     for _ in range(len(settings.ELIGIBLE_ACCIDENTED_ROADS)):
-        accidented_road_id: str = settings.ELIGIBLE_ACCIDENTED_ROADS[(counter_tries_to_create - 1) % len(settings.ELIGIBLE_ACCIDENTED_ROADS)]
+        accidented_road_id: str = settings.ELIGIBLE_ACCIDENTED_ROADS[(settings.counter_tries_to_create - 1) % len(settings.ELIGIBLE_ACCIDENTED_ROADS)]
 
     # for accidented_road_id in settings.ELIGIBLE_ACCIDENTED_ROADS:
         # se a via já está acidentada, então escolhe próxima via elegível
@@ -63,13 +57,13 @@ def create_accident():
                 continue
 
             add_vehicle_to_accident(vehicle_id, accidented_road_id)
-            sum_time_to_block_create_accidents = traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
+            settings.sum_time_to_block_create_accidents = traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
             return None
 
 
 def vehicle_is_in_a_valid_position_lane(veh_accidented_id):
     position = traci.vehicle.getLanePosition(veh_accidented_id)
-    return position > 0.3 * settings.LANE_LENGTH and position < 0.5 * settings.LANE_LENGTH
+    return position > 0.2 * settings.LANE_LENGTH and position < 0.4 * settings.LANE_LENGTH
 
 
 def accidented_road_is_already_accidented(accidented_road_id):

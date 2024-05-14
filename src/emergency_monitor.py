@@ -35,9 +35,24 @@ def remove_vehicle_from_accident(veh_accidented_id):
 def monitor_emergency_vehicles():
     scan_schedule_to_dispatch_emergency_vehicle()
     monitor_change_lane_accidented_vehicle()
+    # monitor_ev_is_stopped()
     monitor_emergency_vehicles_on_the_way()
     monitor_emergency_vehicles_in_the_accident()
     monitor_emergency_vehicles_to_the_hospital()
+
+
+def monitor_ev_is_stopped():
+    for key, emergency_vehicle in enumerate(settings.buffer_emergency_vehicles):
+        veh_emergency_id = emergency_vehicle['veh_emergency_id']
+        if traci.vehicle.getSpeed(veh_emergency_id) == 0:
+            print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is stopped')
+            leader = traci.vehicle.getLeader(veh_emergency_id)
+            if leader is not None:
+                veh_id = leader[0]
+                print(veh_id)
+                if traci.vehicle.getSpeed(veh_id) == 0:
+                    traci.vehicle.updateBestLanes(veh_id)
+                    traci.vehicle.setColor(veh_id, color=(0, 90, 90)) # reroute vehicles to avoid of the aciddented road
 
 
 def monitor_change_lane_accidented_vehicle():
@@ -46,10 +61,10 @@ def monitor_change_lane_accidented_vehicle():
         lane_accidented_id = accidented_vehicle['lane_accidented_id']
         # accidented_road_id = accidented_vehicle['accidented_road_id']
         # accidented_time = accidented_vehicle['accidented_time']
-        vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 3.0)
+        vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 10.0)
         vehicle_follower_id = vehicle_follower_obj[0]
         vehicle_follower_distance = vehicle_follower_obj[1]
-        if vehicle_follower_distance > -0.01 and vehicle_follower_distance <= 3.0:
+        if vehicle_follower_distance > -0.01 and vehicle_follower_distance <= 10.0:
             actual_lane = traci.vehicle.getLaneID(vehicle_follower_id)
             if lane_accidented_id == actual_lane:
                 # print(vehicle_follower_obj)
@@ -57,11 +72,13 @@ def monitor_change_lane_accidented_vehicle():
                 # print(lane_index)
                 if lane_index == 0:
                     lane_index = 1
-                elif lane_index == 2:
-                    lane_index = 1
                 else:
-                    lane_index = 2
-                traci.vehicle.changeLane(vehicle_follower_id, lane_index, 2.0)
+                    lane_index = 0
+                # elif lane_index == 2:
+                #     lane_index = 1
+                # else:
+                #     lane_index = 2
+                traci.vehicle.changeLane(vehicle_follower_id, lane_index, 5.0) # duration is relative to persistent try to change lane
                 # print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} - follower {vehicle_follower_id} - lane {lane_accidented_id}')
         # duration = accidented_vehicle['duration']
         # if duration > 0:
