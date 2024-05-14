@@ -42,10 +42,10 @@ class Config:
         self.counter_assign_random_severity = 0
         self.sum_time_to_block_create_accidents = 0.0
 
-        self.SIMULATION_END_TIME = 1200.0
+        self.SIMULATION_END_TIME = 3600.0
         self.TRIPS_REPETITION_RATE = 1.0
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 200.0
-        self.VEHICLE_NUMBER: int = 500
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 180.0
+        self.VEHICLE_NUMBER: int = 3000
         self.ALGORITHM = 'proposto' # default or proposto
         self.SEED: int = 99
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 5

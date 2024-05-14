@@ -4,8 +4,6 @@ from config import (
     tc,
     settings,
 )
-import os
-import pathlib
 import optparse
 import traceback
 
@@ -16,7 +14,6 @@ from optimization_green_wave import improve_traffic_for_emergency_vehicle
 from optimization_reroute import improve_traffic_on_accidented_road
 from utils import generate_routefile, update_sumo_config
 from transform.xml_to_csv import emission_xml_to_csv, summary_xml_to_csv, tripinfo_xml_to_csv
-# from stats import get_statistics_from_timeloss_and_halting
 
 
 def shouldContinueSim():
@@ -36,28 +33,19 @@ def run():
     print(f'Trips repetition rate: {settings.TRIPS_REPETITION_RATE}')
     print(f'Time to block create accidents: {settings.TIME_TO_BLOCK_CREATE_ACCIDENTS}')
     print(f'Algorithm: {settings.ALGORITHM}')
-    # junctionID = traci.junction.getIDList()[0]
-    # traci.junction.subscribeContext(
-    #     junctionID, tc.CMD_GET_VEHICLE_VARIABLE, 1000000,
-    #     [tc.VAR_SPEED, tc.VAR_ALLOWED_SPEED]
-    # )
     try:
         while shouldContinueSim():
             traci.simulationStep()
             monitor_emergency_vehicles() # monitor emergency vehicles and handle them when they arrive at the accident
-            if traci.simulation.getTime()%10 == 0:
-                create_accident() # create accident
-            if traci.simulation.getTime()%10 == 0:
-                call_emergency_vehicle()
+            if traci.simulation.getTime() < settings.SIMULATION_END_TIME:
+                if traci.simulation.getTime()%10 == 0:
+                    create_accident()
+                if traci.simulation.getTime()%10 == 0:
+                    call_emergency_vehicle()
             if settings.ALGORITHM == 'proposto':
-                # improve_traffic_on_accidented_road() # reroute vehicles to avoid of the aciddented road
                 improve_traffic_for_emergency_vehicle() # green wave solution
-            # get_statistics_from_timeloss_and_halting(junctionID)
             step += 1
             # print(f'Step: {step} - Time: {traci.simulation.getTime()}', end='\r')
-            # if traci.simulation.getTime() > settings.SIMULATION_END_TIME:
-            #     break
-        # get_network_parameters()
         traci.close()
         print('Simulation finished!')
         print(f'Saveds: {settings.count_saveds}')
@@ -130,8 +118,9 @@ if __name__ == "__main__":
     traci.start([
         sumoBinary,
         "-c", options.sumocfg_filepath,
+        # "--lanechange.duration", "5.0",
         "--lateral-resolution", "1.8",
-        "--device.bluelight.reactiondist", "50.0",
+        "--device.bluelight.reactiondist", "1.0",
         # "--device.bluelight.deterministic", "true",
         "--emission-output", f'data/{options.emissions_filepath}',
         #  "--tripinfo-output", f'data/{options.tripinfo_filepath}',
