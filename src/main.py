@@ -13,7 +13,7 @@ from emergency_monitor import monitor_emergency_vehicles
 from optimization_green_wave import improve_traffic_for_emergency_vehicle
 from optimization_reroute import improve_traffic_on_accidented_road
 from utils import generate_routefile, update_sumo_config
-from transform.xml_to_csv import emission_xml_to_csv, summary_xml_to_csv, tripinfo_xml_to_csv
+from transform.xml_to_csv import tripinfo_xml_to_csv
 
 
 def shouldContinueSim():
@@ -29,9 +29,9 @@ def run():
     step = 0
     print('Running simulation...')
     print(f'Seed: {settings.SEED}')
-    print(f'Simulation end time: {settings.SIMULATION_END_TIME}')
-    print(f'Trips repetition rate: {settings.TRIPS_REPETITION_RATE}')
-    print(f'Time to block create accidents: {settings.TIME_TO_BLOCK_CREATE_ACCIDENTS}')
+    print(f'Number of Vehicles to insert: {settings.VEHICLE_NUMBER}')
+    print(f'Delay to dispatch emergency vehicles: {settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE}')
+    print(f'Car Follow Model: {settings.CAR_FOLLOW_MODEL}')
     print(f'Algorithm: {settings.ALGORITHM}')
     try:
         while shouldContinueSim():
@@ -72,13 +72,13 @@ def get_options():
                          default="summary.xml", help="define the summary output file path")
     optParser.add_option("--emissions_filepath", type="string",
                          default="emissions.xml", help="define the emissions output file path")
-    optParser.add_option("--TIME_TO_BLOCK_CREATE_ACCIDENTS", type="string",
-                        default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="define the time to block create new accidents")
-    optParser.add_option("--SIMULATION_END_TIME", type="string",
-                        default=settings.SIMULATION_END_TIME, help="define the simulation end time")
-    optParser.add_option("--TRIPS_REPETITION_RATE", type="string",
-                        default=settings.TRIPS_REPETITION_RATE, help="define the trips repetition rate")
-    optParser.add_option("--ALGORITHM", type="string",
+    optParser.add_option("--car_follow_model", type="string",
+                         default=settings.CAR_FOLLOW_MODEL, help="define the car follow model")
+    optParser.add_option("--delay_dispatch", type="int",
+                        default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="define the delay to dispatch emergency vehicles")
+    optParser.add_option("--vehicle_number", type="int",
+                        default=settings.VEHICLE_NUMBER, help="define the number of vehicles to insert")
+    optParser.add_option("--algorithm", type="string",
                         default=settings.ALGORITHM, help="define the algorithm to be used")
     options, args = optParser.parse_args()
     return options
@@ -96,15 +96,14 @@ if __name__ == "__main__":
         sumoBinary = checkBinary('sumo-gui')
 
     settings.SEED = int(options.seed)
-    settings.TIME_TO_BLOCK_CREATE_ACCIDENTS = float(options.TIME_TO_BLOCK_CREATE_ACCIDENTS)
-    settings.SIMULATION_END_TIME = float(options.SIMULATION_END_TIME)
-    settings.TRIPS_REPETITION_RATE = float(options.TRIPS_REPETITION_RATE)
-    settings.ALGORITHM = options.ALGORITHM
+    settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = float(options.delay_dispatch)
+    settings.VEHICLE_NUMBER = float(options.vehicle_number)
+    settings.ALGORITHM = options.algorithm
+    settings.CAR_FOLLOW_MODEL = options.car_follow_model
 
     generate_routefile(
         route_filepath=options.route_filepath,
         trips_filepath=options.trips_filepath,
-        trips_repetition_rate=settings.TRIPS_REPETITION_RATE,
         seed=settings.SEED,
     )
     update_sumo_config(
@@ -122,8 +121,8 @@ if __name__ == "__main__":
         "--lateral-resolution", "1.8",
         "--device.bluelight.reactiondist", "1.0",
         # "--device.bluelight.deterministic", "true",
-        "--emission-output", f'data/{options.emissions_filepath}',
-        #  "--tripinfo-output", f'data/{options.tripinfo_filepath}',
+        # "--emission-output", f'data/{options.emissions_filepath}',
+         "--tripinfo-output", f'data/{options.tripinfo_filepath}',
         "-S",
         "-Q",
     ])
@@ -133,28 +132,19 @@ if __name__ == "__main__":
     print('Generating CSV files...')
     # results_dir = f'data/results-{settings.SEED}'
     # os.makedirs(results_dir, exist_ok=True)
-    emission_xml_to_csv(
-        f'data/{options.emissions_filepath}',
-        f'data/{options.emissions_filepath[:-4]}.csv',
-        # algorithm,
-        # # proportion_delay_call_emergency_vehicle_to_accident,
-        # trips_repetition_rate,
-        # simulation_end_time,
-    )
-    # tripinfo_xml_to_csv(
-    #     f'data/{options.tripinfo_filepath}',
-    #     f'{results_dir}/{options.tripinfo_filepath[:-4]}.csv',
-    #     # algorithm,
-    #     # # proportion_delay_call_emergency_vehicle_to_accident,
-    #     # trips_repetition_rate,
-    #     # simulation_end_time,
+    # emission_xml_to_csv(
+    #     f'data/{options.emissions_filepath}',
+    #     f'data/{options.emissions_filepath[:-4]}.csv',
     # )
+    tripinfo_xml_to_csv(
+        f'data/{options.tripinfo_filepath}',
+        f'data/{options.tripinfo_filepath[:-4]}.csv',
+    )
     # summary_xml_to_csv(
     #     f'data/{options.summary_filepath}',
     #     f'{results_dir}/{options.summary_filepath[:-4]}.csv',
     #     # algorithm,
     #     # # proportion_delay_call_emergency_vehicle_to_accident,
-    #     # trips_repetition_rate,
     #     # simulation_end_time,
     # )
     print('CSV files generated!')

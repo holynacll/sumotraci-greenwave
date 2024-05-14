@@ -14,7 +14,7 @@ from config import settings
 #     # subprocess.run(cmd_list, check=True
 
 
-def generate_routefile(route_filepath: str, trips_filepath: str, trips_repetition_rate: float, seed: int):
+def generate_routefile(route_filepath: str, trips_filepath: str, seed: int):
     road_filepath = "data/road.net.xml"
     route_filepath = f"data/{route_filepath}"
     # trip_attributes = r"--trip-attributes='color=\"0,0,1\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"5\" minGap=\"2.5\" maxSpeed=\"16.67\" guiShape=\"passenger\" lcStrategic=\"0.5\"'"
@@ -89,7 +89,7 @@ def add_passenger_idm_vehicle_type_to_route_file(root):
     new_element = ET.fromstring("""
     <vType 
         id="passenger_idm"
-        carFollowModel="EIDM"
+        carFollowModel="Krauss"
         color="yellow"
     >
     </vType>

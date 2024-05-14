@@ -5,8 +5,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import setup_environment # Carrega o ambiente de configuração
 
-os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
-# os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+# os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
+os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 
 
 if 'SUMO_HOME' in os.environ:
@@ -42,13 +42,13 @@ class Config:
         self.counter_assign_random_severity = 0
         self.sum_time_to_block_create_accidents = 0.0
 
-        self.SIMULATION_END_TIME = 3600.0
-        self.TRIPS_REPETITION_RATE = 1.0
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 180.0
-        self.VEHICLE_NUMBER: int = 3000
-        self.ALGORITHM = 'proposto' # default or proposto
         self.SEED: int = 99
-        self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 5
+        self.VEHICLE_NUMBER: int = 3000
+        self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 20
+        self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
+        self.ALGORITHM = 'proposto' # default or proposto
+        self.SIMULATION_END_TIME = 3600.0
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 180.0
         self.LANE_LENGTH = 200.0
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
         self.TLJ_PHASE_GREEN_DURATION = 5.0

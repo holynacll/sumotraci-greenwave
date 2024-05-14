@@ -1,17 +1,17 @@
-Nº Experimento,Incidência de Viagens Por Unidade de Tempo (trip/second),Tempo de Bloqueio de Criação de Acidentes (steps),Tempo de Simulação (steps),Algoritmo
-1,1,75,600,default
-2,1,75,600,proposto
-3,1,75,1200,default
-4,1,75,1200,proposto
-5,1,150,600,default
-6,1,150,600,proposto
-7,1,150,1200,default
-8,1,150,1200,proposto
-9,2,75,600,default
-10,2,75,600,proposto
-11,2,75,1200,default
-12,2,75,1200,proposto
-13,2,150,600,default
-14,2,150,600,proposto
-15,2,150,1200,default
-16,2,150,1200,proposto
+Nº Experimento,Quantidade de Veículos (int),Tempo de Atraso De Despacho (steps),Modelo de Acompanhamento de Carro,Algoritmo
+1,1500,5,Krauss,default
+2,1500,5,Krauss,proposto
+3,1500,5,EIDM,default
+4,1500,5,EIDM,proposto
+5,1500,20,Krauss,default
+6,1500,20,Krauss,proposto
+7,1500,20,EIDM,default
+8,1500,20,EIDM,proposto
+9,3000,5,Krauss,default
+10,3000,5,Krauss,proposto
+11,3000,5,EIDM,default
+12,3000,5,EIDM,proposto
+13,3000,20,Krauss,default
+14,3000,20,Krauss,proposto
+15,3000,20,EIDM,default
+16,3000,20,EIDM,proposto

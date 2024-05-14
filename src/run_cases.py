@@ -1,6 +1,4 @@
 import os
-import time
-import sys
 import pathlib
 import pandas as pd
 import subprocess
@@ -9,7 +7,7 @@ import concurrent.futures
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # from config import settings
 # from src.transform.xml_to_csv import emission_xml_to_csv, summary_xml_to_csv
-from merge_csvs import merge_csvs
+from scripts.merge_csvs import merge_csvs
 
 def run_simulation(
     seed: int,
@@ -18,11 +16,11 @@ def run_simulation(
     route_filename: str,
     trips_filename: str,
     tripinfo_filename: str,
-    
-    TIME_TO_BLOCK_CREATE_ACCIDENTS: str,
-    SIMULATION_END_TIME: str,
-    TRIPS_REPETITION_RATE: str,
-    ALGORITHM: str,
+
+    number_of_vehicles: str,
+    delay_dispatch: str,
+    car_follow_model: str,
+    algorithm: str,
 ):
     # execute main.py com as configurações atualizadas
     subprocess.run([
@@ -34,10 +32,10 @@ def run_simulation(
         '--trips_filepath', trips_filename,
         '--tripinfo_filepath', tripinfo_filename, 
         
-        '--TIME_TO_BLOCK_CREATE_ACCIDENTS', TIME_TO_BLOCK_CREATE_ACCIDENTS,
-        '--SIMULATION_END_TIME', SIMULATION_END_TIME,
-        '--TRIPS_REPETITION_RATE', TRIPS_REPETITION_RATE,
-        '--ALGORITHM', ALGORITHM,
+        '--vehicle_number', number_of_vehicles,
+        '--delay_dispatch', delay_dispatch,
+        '--car_follow_model', car_follow_model,
+        '--algorithm', algorithm,
     ])
     return pathlib.Path(f'{os.getcwd()}/data/{emissions_filename[:-4]}.csv').resolve()
 
@@ -60,10 +58,10 @@ def main():
                 trips_filename = f'data/trips_{index}.trips.xml'
                 tripinfo_filename = f'tripinfo_{index}.xml'
 
-                TIME_TO_BLOCK_CREATE_ACCIDENTS=str(row['Tempo de Bloqueio de Criação de Acidentes (steps)'])
-                SIMULATION_END_TIME=str(row['Tempo de Simulação (steps)'])
-                TRIPS_REPETITION_RATE=str(row['Incidência de Viagens Por Unidade de Tempo (trip/second)'])
-                ALGORITHM=str(row['Algoritmo'])
+                number_of_vehicles: str = str(row['Quantidade de Veículos (int)'])
+                delay_dispatch: str = str(row['Tempo de Atraso De Despacho (steps)'])
+                car_follow_model: str = str(row['Modelo de Acompanhamento de Carro'])
+                algorithm: str = str(row['Algoritmo'])
 
                 future = executor.submit(
                     run_simulation,
@@ -73,10 +71,10 @@ def main():
                     route_filename=route_filename,
                     trips_filename=trips_filename,
                     tripinfo_filename=tripinfo_filename,
-                    TIME_TO_BLOCK_CREATE_ACCIDENTS=TIME_TO_BLOCK_CREATE_ACCIDENTS,
-                    SIMULATION_END_TIME=SIMULATION_END_TIME,
-                    TRIPS_REPETITION_RATE=TRIPS_REPETITION_RATE,
-                    ALGORITHM=ALGORITHM,
+                    number_of_vehicles=number_of_vehicles,
+                    delay_dispatch=delay_dispatch,
+                    car_follow_model=car_follow_model,
+                    algorithm=algorithm,
                 )
                 futures.append(future)
 
