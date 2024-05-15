@@ -5,8 +5,8 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import setup_environment # Carrega o ambiente de configuração
 
-# os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
-os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
+# os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 
 
 if 'SUMO_HOME' in os.environ:

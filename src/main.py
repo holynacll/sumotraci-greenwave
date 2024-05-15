@@ -13,7 +13,7 @@ from emergency_monitor import monitor_emergency_vehicles
 from optimization_green_wave import improve_traffic_for_emergency_vehicle
 from optimization_reroute import improve_traffic_on_accidented_road
 from utils import generate_routefile, update_sumo_config
-from transform.xml_to_csv import tripinfo_xml_to_csv
+from xml_to_csv import tripinfo_xml_to_csv
 
 
 def shouldContinueSim():
@@ -129,6 +129,10 @@ if __name__ == "__main__":
         
     run()
 
+    print('from main.py')
+    print(settings.ALGORITHM)
+    print(settings.CAR_FOLLOW_MODEL)
+    print(settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE)
     print('Generating CSV files...')
     # results_dir = f'data/results-{settings.SEED}'
     # os.makedirs(results_dir, exist_ok=True)

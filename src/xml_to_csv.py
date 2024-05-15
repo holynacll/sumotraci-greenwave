@@ -1,8 +1,7 @@
 import csv
 import xml.etree.ElementTree as ET
 
-# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.config import settings
+from config import settings
 
 def emission_xml_to_csv(xml_file, csv_file):
     print(f'emission_xml_to_csv - seed: {settings.SEED}')

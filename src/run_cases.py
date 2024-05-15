@@ -37,7 +37,7 @@ def run_simulation(
         '--car_follow_model', car_follow_model,
         '--algorithm', algorithm,
     ])
-    return pathlib.Path(f'{os.getcwd()}/data/{emissions_filename[:-4]}.csv').resolve()
+    return pathlib.Path(f'{os.getcwd()}/data/{tripinfo_filename[:-4]}.csv').resolve()
 
 
 def main():

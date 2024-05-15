@@ -3,7 +3,7 @@ import sys
 
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # import config
-from src.transform.xml_to_csv import tripinfo_xml_to_csv
+from src.xml_to_csv import tripinfo_xml_to_csv
 
 
 pwd = os.path.dirname(os.path.abspath(__file__))
