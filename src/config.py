@@ -43,22 +43,22 @@ class Config:
         self.sum_time_to_block_create_accidents = 0.0
 
         self.SEED: int = 99
-        self.VEHICLE_NUMBER: int = 3000
+        self.VEHICLE_NUMBER: int = 36000 # Number of vehicles in the simulation
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 20
         self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
+
         self.SIMULATION_END_TIME = 3600.0
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 180.0
-        self.LANE_LENGTH = 200.0
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 90.0 # seconds to block create accidents
+        self.LANE_LENGTH = 200.0 # The length of the lane in meters
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
-        self.TLJ_PHASE_GREEN_DURATION = 5.0
-        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 10.0 # Seconds
+        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 10.0 # GreenWave Transition time on seconds
         self.MAX_STOP_DURATION = 10 # not working
         self.SPEED_ROAD = 13.89 # The default speed on an edge (in m/s); default: 13.89
-        self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0
+        self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0 # The minimum distance to the accident for the emergency vehicle to arrive
         self.HOSPITAL_POS_START = 'A1B1'
         self.HOSPITAL_POS_END = 'B1A1'
-        self.ELIGIBLE_ACCIDENTED_ROADS = ['B2C2', 'D2C2']
+        self.ELIGIBLE_ACCIDENTED_ROADS = ['B2C2', 'D2C2'] # Roads that can have accidents
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
         self.buffer_tls_on_green_wave = []
