@@ -62,7 +62,11 @@ def monitor_change_lane_accidented_vehicle():
         lane_accidented_id = accidented_vehicle['lane_accidented_id']
         # accidented_road_id = accidented_vehicle['accidented_road_id']
         # accidented_time = accidented_vehicle['accidented_time']
-        vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 10.0)
+        try:
+            vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 10.0)
+        except traci.TraCIException:
+            settings.buffer_vehicles_accidenteds.pop(key)
+            continue
         vehicle_follower_id = vehicle_follower_obj[0]
         vehicle_follower_distance = vehicle_follower_obj[1]
         if vehicle_follower_distance > -0.01 and vehicle_follower_distance <= 10.0:

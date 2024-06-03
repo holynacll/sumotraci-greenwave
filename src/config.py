@@ -2,22 +2,29 @@ from enum import Enum
 import os
 import sys
 # Dynamically adjust sys.path to include the root directory where setup_environment.py is located
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import setup_environment # Carrega o ambiente de configuração
+# sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# import setup_environment # Carrega o ambiente de configuração
 
-os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
+os.environ['SUMO_HOME'] = "/home/acll/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+# os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
 # os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 
 
 if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+    tools = os.path.join(os.environ.get('SUMO_HOME'), 'tools')
     sys.path.append(tools)
+    print(f"Pasta tools adicionada ao sys.path: {tools}")
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
-import traci
-import traci.constants as tc
-from sumolib import checkBinary  # noqa
+try:
+    import traci
+    import traci.constants as tc
+    from sumolib import checkBinary  # noqa
+    print("traci importado com sucesso.")
+except ModuleNotFoundError as e:
+    print(f"Erro ao importar módulo: {e}")
+    sys.exit("Certifique-se de que o SUMO e o Traci estão instalados corretamente e o caminho do SUMO_HOME está correto.")
 
 # Enums
 class SeverityEnum(str, Enum):
@@ -43,7 +50,7 @@ class Config:
         self.sum_time_to_block_create_accidents = 0.0
 
         self.SEED: int = 99
-        self.VEHICLE_NUMBER: int = 36000 # Number of vehicles in the simulation
+        self.VEHICLE_NUMBER: int = 4800 # Number of vehicles in the simulation
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 20
         self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
@@ -58,7 +65,7 @@ class Config:
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0 # The minimum distance to the accident for the emergency vehicle to arrive
         self.HOSPITAL_POS_START = 'A1B1'
         self.HOSPITAL_POS_END = 'B1A1'
-        self.ELIGIBLE_ACCIDENTED_ROADS = ['B2C2', 'D2C2'] # Roads that can have accidents
+        self.ELIGIBLE_ACCIDENTED_ROADS = ['B2C2', 'D2C2', 'A2B2', 'C0B0', 'D1D0' ] # Roads that can have accidents
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
         self.buffer_tls_on_green_wave = []

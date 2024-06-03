@@ -46,12 +46,13 @@ def run():
                 improve_traffic_for_emergency_vehicle() # green wave solution
             step += 1
             # print(f'Step: {step} - Time: {traci.simulation.getTime()}', end='\r')
-        traci.close()
         print('Simulation finished!')
         print(f'Saveds: {settings.count_saveds}')
         print(f'Unsaveds: {settings.count_accidents - settings.count_saveds}')
     except Exception as e:
         print(traceback.format_exc())
+    finally:
+        traci.close()
 
 
 def get_options():
