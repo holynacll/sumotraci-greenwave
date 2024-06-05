@@ -110,6 +110,7 @@ def green_wave_initial_transition(key: str):
     )
     tls_state = traci.trafficlight.getRedYellowGreenState(tls_id)
     ryg_state: str = ''
+    # all in green wave - open one and close others
     for index, lane in enumerate(controlled_lanes):
         lane_state = tls_state[index]
         if first_edge_on_route_to_reach_tls_id in lane and lane_state in ('g', 'G'):

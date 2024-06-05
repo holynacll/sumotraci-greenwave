@@ -25,8 +25,14 @@ def speed_road_recovery(accidented_road_id):
 def remove_vehicle_from_accident(veh_accidented_id):
     for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
         if settings.buffer_vehicles_accidenteds[key]['veh_accidented_id'] == veh_accidented_id:
+            try:
+                traci.vehicle.remove(veh_accidented_id)
+            except traci.TraCIException:
+                pass
+            speed_road_recovery(
+                accidented_road_id=settings.buffer_vehicles_accidenteds[key]['accidented_road_id']
+            )
             settings.buffer_vehicles_accidenteds.pop(key)
-            traci.vehicle.remove(veh_accidented_id)
             print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
             return True
     return False
@@ -65,35 +71,21 @@ def monitor_change_lane_accidented_vehicle():
         try:
             vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 10.0)
         except traci.TraCIException:
-            settings.buffer_vehicles_accidenteds.pop(key)
+            remove_vehicle_from_accident(veh_accidented_id)
             continue
         vehicle_follower_id = vehicle_follower_obj[0]
         vehicle_follower_distance = vehicle_follower_obj[1]
         if vehicle_follower_distance > -0.01 and vehicle_follower_distance <= 10.0:
             actual_lane = traci.vehicle.getLaneID(vehicle_follower_id)
             if lane_accidented_id == actual_lane:
-                # print(vehicle_follower_obj)
                 lane_index = int(lane_accidented_id.split('_')[1])
-                # print(lane_index)
                 if lane_index == 0:
                     lane_index = 1
+                elif lane_index == 1:
+                    lane_index = 2
                 else:
-                    lane_index = 0
-                # elif lane_index == 2:
-                #     lane_index = 1
-                # else:
-                #     lane_index = 2
+                    lane_index = 1
                 traci.vehicle.changeLane(vehicle_follower_id, lane_index, 5.0) # duration is relative to persistent try to change lane
-                # print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} - follower {vehicle_follower_id} - lane {lane_accidented_id}')
-        # duration = accidented_vehicle['duration']
-        # if duration > 0:
-        #     duration -= 1
-        #     settings.buffer_vehicles_accidenteds[key]['duration'] = duration
-        # else:
-        #     remove_vehicle_from_accident(veh_accidented_id)
-        #     speed_road_recovery(accidented_road_id)
-        #     settings.buffer_vehicles_accidenteds.pop(key)
-        #     print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
 
 
 def monitor_emergency_vehicles_to_the_hospital(key):
@@ -131,11 +123,10 @@ def monitor_emergency_vehicles_in_the_accident(key):
             duration -= 1
             settings.buffer_emergency_vehicles[key]['duration'] = duration
         else:
-            if remove_vehicle_from_accident(veh_accidented_id):
-                settings.buffer_emergency_vehicles[key]['vehicle_removed'] = True
-            # traci.vehicle.changeTarget(veh_emergency_id, hospital_pos_end)
             settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.TO_THE_HOSPITAL.value
-            speed_road_recovery(accidented_road_id)
+            remove_vehicle_from_accident(veh_accidented_id)
+            settings.buffer_emergency_vehicles[key]['vehicle_removed'] = True
+            # traci.vehicle.changeTarget(veh_emergency_id, hospital_pos_end)
             # traci.vehicle.setSpeed(veh_emergency_id, -1)
             # traci.vehicle.setAcceleration(veh_emergency_id, 50, 0)
             # traci.vehicle.setSpeedMode(veh_emergency_id, 0)

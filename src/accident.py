@@ -67,7 +67,7 @@ def create_accident():
 
 def vehicle_is_in_a_valid_position_lane(veh_accidented_id):
     position = traci.vehicle.getLanePosition(veh_accidented_id)
-    return position > 0.2 * settings.LANE_LENGTH and position < 0.6 * settings.LANE_LENGTH
+    return position > 0.4 * settings.LANE_LENGTH and position < 0.6 * settings.LANE_LENGTH
 
 
 def accidented_road_is_already_accidented(accidented_road_id):
