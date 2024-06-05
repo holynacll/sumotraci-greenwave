@@ -28,7 +28,12 @@ def schedule_emergency_vehicle(accident):
     for key, veh_accidented in enumerate(settings.buffer_vehicles_accidenteds):
         if veh_accidented['veh_accidented_id'] == veh_accidented_id:
             settings.buffer_vehicles_accidenteds[key]['veh_emergency_id'] = veh_emergency_id
+    create_dispatch_emergency_vehicle(accident=accident)
 
+
+def create_dispatch_emergency_vehicle(accident):
+    veh_accidented_id = accident['veh_accidented_id']
+    veh_emergency_id = accident['veh_emergency_id']
     settings.buffer_schedule_to_dispatch_emergency_vehicle.append({
         'accident': accident,
         'time': traci.simulation.getTime()+settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE,
@@ -53,7 +58,11 @@ def dispatch_emergency_vehicle(accident):
     accidented_road_id = accident['accidented_road_id']
     severity = accident['severity']    
     
-    arrival_pos = traci.vehicle.getLanePosition(veh_accidented_id)
+    try:
+        arrival_pos = traci.vehicle.getLanePosition(veh_accidented_id)
+    except traci.TraCIException:
+        create_dispatch_emergency_vehicle(accident=accident)
+        return
     route_to_accident = traci.simulation.findRoute(
         fromEdge=settings.HOSPITAL_POS_START,
         toEdge=accidented_road_id,

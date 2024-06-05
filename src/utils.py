@@ -86,10 +86,10 @@ def add_passenger_vehicle_type_to_route_file(root):
 
 
 def add_passenger_idm_vehicle_type_to_route_file(root):
-    new_element = ET.fromstring("""
+    new_element = ET.fromstring(f"""
     <vType 
         id="passenger_idm"
-        carFollowModel="Krauss"
+        carFollowModel="{settings.CAR_FOLLOW_MODEL}"
         color="yellow"
     >
     </vType>
