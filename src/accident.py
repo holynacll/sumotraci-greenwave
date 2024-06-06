@@ -59,11 +59,6 @@ def create_accident():
             # se a via está congelada para novos acidentes
             if road_is_freezed_to_new_accidents(accidented_road_id):
                 continue
-            
-            
-            # se a via está presente nos últimos três acidentes
-            # if road_is_one_of_the_last_accidentds(accidented_road_id):
-            #     continue
 
             add_vehicle_to_accident(vehicle_id, accidented_road_id)
             settings.sum_time_to_block_create_accidents = traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
@@ -119,9 +114,4 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
         }
     )
     add_counter_accidents()
-    update_last_roads_accidenteds(accidented_road_id)
     print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been accidented in road {accidented_road_id} with severity {severity}')
-
-
-def update_last_roads_accidenteds(accidented_road_id):
-    settings.last_roads_accidenteds.append(accidented_road_id)

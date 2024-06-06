@@ -1,5 +1,5 @@
 from enum import Enum
-from collections import deque, namedtuple
+from collections import namedtuple
 import os
 import sys
 # Dynamically adjust sys.path to include the root directory where setup_environment.py is located
@@ -79,7 +79,6 @@ class Config:
         self.buffer_schedule_to_remove_accidented_vehicle = []
         self.RoadsFreezedToNewAccidents = namedtuple('RoadsFreezedToNewAccidents', ['road_id', 'time'])
         self.buffer_roads_freezed_to_new_accidents: list[self.RoadsFreezedToNewAccidents] = []
-        self.last_roads_accidenteds = deque(maxlen=1)
         
         self.SeverityEnum = SeverityEnum
         self.StatusEnum = StatusEnum
