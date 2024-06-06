@@ -21,7 +21,7 @@ def remove_vehicle_from_accident(veh_accidented_id):
             settings.buffer_roads_freezed_to_new_accidents.append(
                 settings.RoadsFreezedToNewAccidents(
                     road_id=accidented_road_id,
-                    time=traci.simulation.getTime() + settings.TIME_TO_RELEASE_FOR_NEW_ACCIDENTEDS_ON_THE_ROAD
+                    time=traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
                 )
             )
             settings.buffer_vehicles_accidenteds.pop(key)

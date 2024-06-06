@@ -26,9 +26,6 @@ def create_accident():
     # se o tempo de bloqueio de criar acidentes for maior que o tempo de simulação, então não cria acidente
     add_counter_tries_to_create()
 
-    if traci.simulation.getTime() < settings.sum_time_to_block_create_accidents:
-        return
-
     # se já atingiu o limite de acidentes, então não cria mais acidentes
     if len(settings.buffer_vehicles_accidenteds) >= len(settings.ELIGIBLE_ACCIDENTED_ROADS):
         return
@@ -61,7 +58,6 @@ def create_accident():
                 continue
 
             add_vehicle_to_accident(vehicle_id, accidented_road_id)
-            settings.sum_time_to_block_create_accidents = traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
             return None
 
 

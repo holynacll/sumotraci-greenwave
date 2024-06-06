@@ -1,17 +1,17 @@
-Nº Experimento,Quantidade de Veículos (int),Tempo de Atraso De Despacho (steps),Modelo de Acompanhamento de Carro,Algoritmo
-1,1500,5,Krauss,default
-2,1500,5,Krauss,proposto
-3,1500,5,EIDM,default
-4,1500,5,EIDM,proposto
-5,1500,20,Krauss,default
-6,1500,20,Krauss,proposto
-7,1500,20,EIDM,default
-8,1500,20,EIDM,proposto
-9,3000,5,Krauss,default
-10,3000,5,Krauss,proposto
-11,3000,5,EIDM,default
-12,3000,5,EIDM,proposto
-13,3000,20,Krauss,default
-14,3000,20,Krauss,proposto
-15,3000,20,EIDM,default
-16,3000,20,EIDM,proposto
+Nº Experimento,Quantidade de Veículos (int),Tempo de Bloqueio de Criação de Acidente (steps),Modelo de Acompanhamento de Carro,Algoritmo
+1,3600,60,Krauss,default
+2,3600,60,Krauss,proposto
+3,3600,60,EIDM,default
+4,3600,60,EIDM,proposto
+5,3600,120,Krauss,default
+6,3600,120,Krauss,proposto
+7,3600,120,EIDM,default
+8,3600,120,EIDM,proposto
+9,7200,60,Krauss,default
+10,7200,60,Krauss,proposto
+11,7200,60,EIDM,default
+12,7200,60,EIDM,proposto
+13,7200,120,Krauss,default
+14,7200,120,Krauss,proposto
+15,7200,120,EIDM,default
+16,7200,120,EIDM,proposto

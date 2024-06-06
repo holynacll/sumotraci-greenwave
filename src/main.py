@@ -76,7 +76,7 @@ def get_options():
     optParser.add_option("--car_follow_model", type="string",
                          default=settings.CAR_FOLLOW_MODEL, help="define the car follow model")
     optParser.add_option("--delay_dispatch", type="int",
-                        default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="define the delay to dispatch emergency vehicles")
+                        default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="define the time to freeze create new accidents")
     optParser.add_option("--vehicle_number", type="int",
                         default=settings.VEHICLE_NUMBER, help="define the number of vehicles to insert")
     optParser.add_option("--algorithm", type="string",

@@ -59,7 +59,7 @@ def main():
                 tripinfo_filename = f'tripinfo_{index}.xml'
 
                 number_of_vehicles: str = str(row['Quantidade de Veículos (int)'])
-                delay_dispatch: str = str(row['Tempo de Atraso De Despacho (steps)'])
+                delay_dispatch: str = str(row['Tempo de Bloqueio de Criação de Acidente (steps)'])
                 car_follow_model: str = str(row['Modelo de Acompanhamento de Carro'])
                 algorithm: str = str(row['Algoritmo'])
 
