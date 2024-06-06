@@ -7,8 +7,8 @@ import sys
 # import setup_environment # Carrega o ambiente de configuração
 
 # os.environ['SUMO_HOME'] = "/home/acll/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
-os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
-# os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+# os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
+os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 
 
 if 'SUMO_HOME' in os.environ:
@@ -49,9 +49,9 @@ class Config:
         self.counter_tries_to_create = 0
         self.counter_assign_random_severity = 0
 
-        self.SEED: int = 99
-        self.VEHICLE_NUMBER: int = 7200 # Number of vehicles in the simulation
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 60.0 # seconds to block create accidents
+        self.SEED: int = 51
+        self.VEHICLE_NUMBER: int = 7600 # Number of vehicles in the simulation
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 80.0 # seconds to block create accidents
         self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
 
@@ -89,9 +89,9 @@ class Config:
         }
         self.severity_speed_road_accidented = {
             self.SeverityEnum.CRITICAL: 0.7,
-            self.SeverityEnum.HIGH: 1.0,
-            self.SeverityEnum.MEDIUM: 1.3,
-            self.SeverityEnum.LOW: 1.6
+            self.SeverityEnum.HIGH: 1.5,
+            self.SeverityEnum.MEDIUM: 2.0,
+            self.SeverityEnum.LOW: 3.0
         }
 
 
