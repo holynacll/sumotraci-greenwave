@@ -3,23 +3,11 @@ from config import (
     settings,
 )
 from emergency_call import scan_schedule_to_dispatch_emergency_vehicle
-# from optimization_green_wave import remove_remaining_tls_on_green_wave
+
 
 def speed_road_recovery(accidented_road_id):
-    can_increase_max_speed = True
-    for emergency_vehicle in  settings.buffer_emergency_vehicles:
-        # se existe algum acidente em andamento
-        if (
-            emergency_vehicle['accidented_road_id'] == accidented_road_id and
-            (
-                emergency_vehicle['status'] == settings.StatusEnum.ON_THE_WAY.value or
-                emergency_vehicle['status'] == settings.StatusEnum.IN_THE_ACCIDENT.value
-            )
-        ):
-            can_increase_max_speed = False
-    if can_increase_max_speed:
-        traci.edge.setMaxSpeed(accidented_road_id, settings.SPEED_ROAD)
-        print(f'{traci.simulation.getTime()} - Road {accidented_road_id} has been recovered')
+    traci.edge.setMaxSpeed(accidented_road_id, settings.SPEED_ROAD)
+    print(f'{traci.simulation.getTime()} - Road {accidented_road_id} has been recovered')
 
 
 def remove_vehicle_from_accident(veh_accidented_id):
@@ -29,10 +17,15 @@ def remove_vehicle_from_accident(veh_accidented_id):
                 traci.vehicle.remove(veh_accidented_id)
             except traci.TraCIException:
                 pass
-            speed_road_recovery(
-                accidented_road_id=settings.buffer_vehicles_accidenteds[key]['accidented_road_id']
+            accidented_road_id = settings.buffer_vehicles_accidenteds[key]['accidented_road_id']
+            settings.buffer_roads_freezed_to_new_accidents.append(
+                settings.RoadsFreezedToNewAccidents(
+                    road_id=accidented_road_id,
+                    time=traci.simulation.getTime() + settings.TIME_TO_RELEASE_FOR_NEW_ACCIDENTEDS_ON_THE_ROAD
+                )
             )
             settings.buffer_vehicles_accidenteds.pop(key)
+            speed_road_recovery(accidented_road_id=accidented_road_id)
             print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
             return True
     return False
@@ -41,33 +34,16 @@ def remove_vehicle_from_accident(veh_accidented_id):
 def monitor_emergency_vehicles():
     scan_schedule_to_dispatch_emergency_vehicle()
     monitor_change_lane_accidented_vehicle()
-    # monitor_ev_is_stopped()
     for key in range(len(settings.buffer_emergency_vehicles) -1, -1, -1):
         monitor_emergency_vehicles_on_the_way(key)
         monitor_emergency_vehicles_in_the_accident(key)
         monitor_emergency_vehicles_to_the_hospital(key)
 
 
-def monitor_ev_is_stopped():
-    for key, emergency_vehicle in enumerate(settings.buffer_emergency_vehicles):
-        veh_emergency_id = emergency_vehicle['veh_emergency_id']
-        if traci.vehicle.getSpeed(veh_emergency_id) == 0:
-            print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} is stopped')
-            leader = traci.vehicle.getLeader(veh_emergency_id)
-            if leader is not None:
-                veh_id = leader[0]
-                print(veh_id)
-                if traci.vehicle.getSpeed(veh_id) == 0:
-                    traci.vehicle.updateBestLanes(veh_id)
-                    traci.vehicle.setColor(veh_id, color=(0, 90, 90)) # reroute vehicles to avoid of the aciddented road
-
-
 def monitor_change_lane_accidented_vehicle():
-    for key, accidented_vehicle in enumerate(settings.buffer_vehicles_accidenteds):
+    for _, accidented_vehicle in enumerate(settings.buffer_vehicles_accidenteds):
         veh_accidented_id = accidented_vehicle['veh_accidented_id']
         lane_accidented_id = accidented_vehicle['lane_accidented_id']
-        # accidented_road_id = accidented_vehicle['accidented_road_id']
-        # accidented_time = accidented_vehicle['accidented_time']
         try:
             vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 10.0)
         except traci.TraCIException:
@@ -79,14 +55,22 @@ def monitor_change_lane_accidented_vehicle():
             actual_lane = traci.vehicle.getLaneID(vehicle_follower_id)
             if lane_accidented_id == actual_lane:
                 lane_index = int(lane_accidented_id.split('_')[1])
-                if lane_index == 0:
-                    lane_index = 1
-                elif lane_index == 1:
-                    lane_index = 2
+                lanes_count = traci.edge.getLaneNumber(traci.vehicle.getRoadID(vehicle_follower_id))
+                
+                new_lane_index = None
+                for offset in [-1, 1]:  # Check left lane first, then right lane
+                    temp_lane_index = lane_index + offset
+                    if 0 <= temp_lane_index < lanes_count:
+                        if traci.vehicle.wantsAndCouldChangeLane(vehicle_follower_id, offset):
+                            new_lane_index = temp_lane_index
+                            break
+                
+                if new_lane_index is not None:
+                    traci.vehicle.changeLane(vehicle_follower_id, new_lane_index, 5.0)  # Attempt lane change
+                    print(f'{traci.simulation.getTime()} - Vehicle {vehicle_follower_id} has changed lane to {new_lane_index}')
                 else:
-                    lane_index = 1
-                traci.vehicle.changeLane(vehicle_follower_id, lane_index, 5.0) # duration is relative to persistent try to change lane
-
+                    # If no lane is available, reduce speed to avoid collision
+                    traci.vehicle.slowDown(vehicle_follower_id, 0.5 * traci.vehicle.getAllowedSpeed(vehicle_follower_id), 5.0)
 
 def monitor_emergency_vehicles_to_the_hospital(key):
     emergency_vehicle = settings.buffer_emergency_vehicles[key]
@@ -99,38 +83,19 @@ def monitor_emergency_vehicles_to_the_hospital(key):
             if settings.buffer_emergency_vehicles[key]['vehicle_removed']:
                 settings.count_saveds += 1
             settings.buffer_emergency_vehicles.pop(key)
-            # traci.vehicle.remove(veh_emergency_id)
-            # remove_remaining_tls_on_green_wave(veh_emergency_id, [])
-            # # remove tls alocados para esse veículo de emergência
-            # for key in range(len(settings.buffer_tls_on_green_wave) - 1, -1, -1):
-            #     tls_on_green_wave = settings.buffer_tls_on_green_wave[key]
-            #     if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
-            #         traci.trafficlight.setProgram(tls_on_green_wave['tls_id'], tls_on_green_wave['original_tl_program'])
-            #         settings.buffer_tls_on_green_wave.pop(key)
             print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has arrived at the hospital')
 
 
 def monitor_emergency_vehicles_in_the_accident(key):
     emergency_vehicle = settings.buffer_emergency_vehicles[key]
     veh_emergency_id = emergency_vehicle['veh_emergency_id']
-    hospital_pos_end = emergency_vehicle['hospital_pos_end']
     veh_accidented_id = emergency_vehicle['veh_accidented_id']
-    accidented_road_id = emergency_vehicle['accidented_road_id']
-    duration = emergency_vehicle['duration']
     status = emergency_vehicle['status']
     if status == settings.StatusEnum.IN_THE_ACCIDENT.value:
-        if duration > 0:
-            duration -= 1
-            settings.buffer_emergency_vehicles[key]['duration'] = duration
-        else:
-            settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.TO_THE_HOSPITAL.value
-            remove_vehicle_from_accident(veh_accidented_id)
+        settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.TO_THE_HOSPITAL.value
+        if remove_vehicle_from_accident(veh_accidented_id):
             settings.buffer_emergency_vehicles[key]['vehicle_removed'] = True
-            # traci.vehicle.changeTarget(veh_emergency_id, hospital_pos_end)
-            # traci.vehicle.setSpeed(veh_emergency_id, -1)
-            # traci.vehicle.setAcceleration(veh_emergency_id, 50, 0)
-            # traci.vehicle.setSpeedMode(veh_emergency_id, 0)
-            print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left the accident')
+        print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left the accident')
 
 
 def monitor_emergency_vehicles_on_the_way(key):
@@ -146,11 +111,6 @@ def monitor_emergency_vehicles_on_the_way(key):
             actual_road = None
         if actual_road == accidented_road_id:
             distance = traci.vehicle.getDrivingDistance(veh_emergency_id, actual_road, arrival_pos)
-            if  distance < settings.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT:
-                # stop emergency vehicle for some duration
-                # traci.vehicle.setStop(vehID=veh_emergency_id, edgeID=actual_road, laneIndex=1, pos=arrival_pos, duration=settings.MAX_STOP_DURATION)
-                # traci.vehicle.setSpeedMode(veh_emergency_id, 31)
-                # traci.vehicle.setSpeed(veh_emergency_id, 0)
-                # traci.vehicle.setAcceleration(vehID=veh_emergency_id, acceleration=0, duration=settings.MAX_STOP_DURATION)
+            if distance < settings.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT:
                 settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.IN_THE_ACCIDENT.value
                 print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has arrived at the accident')

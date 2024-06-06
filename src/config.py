@@ -1,5 +1,5 @@
 from enum import Enum
-from collections import deque
+from collections import deque, namedtuple
 import os
 import sys
 # Dynamically adjust sys.path to include the root directory where setup_environment.py is located
@@ -50,8 +50,8 @@ class Config:
         self.counter_assign_random_severity = 0
         self.sum_time_to_block_create_accidents = 0.0
 
-        self.SEED: int = 754
-        self.VEHICLE_NUMBER: int = 5000 # Number of vehicles in the simulation
+        self.SEED: int = 99
+        self.VEHICLE_NUMBER: int = 7200 # Number of vehicles in the simulation
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 20.0 # seconds to dispatch emergency vehicle
         self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
@@ -69,7 +69,7 @@ class Config:
         self.HOSPITAL_POS_END = 'B1A1'
         # self.ELIGIBLE_ACCIDENTED_ROADS = ['B2C2', 'D2C2', 'A2B2', 'C0B0', 'D1D0' ] # Roads that can have accidents
         # self.ELIGIBLE_ACCIDENTED_ROADS = ['A3A4', 'B3C3', 'D3C3', 'E1E2', 'D0C0'] # Roads that can have accidents
-        self.ELIGIBLE_ACCIDENTED_ROADS = ['B2C2', 'D2C2', 'C1C0', 'B3C3'] # Roads that can have accidents
+        self.ELIGIBLE_ACCIDENTED_ROADS = ['B3C3', 'D3C3'] # Roads that can have accidents
 
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
@@ -77,7 +77,9 @@ class Config:
         self.buffer_tls_on_transition = []
         self.buffer_schedule_to_dispatch_emergency_vehicle = []
         self.buffer_schedule_to_remove_accidented_vehicle = []
-        self.last_three_roads_accidenteds = deque(maxlen=3)
+        self.RoadsFreezedToNewAccidents = namedtuple('RoadsFreezedToNewAccidents', ['road_id', 'time'])
+        self.buffer_roads_freezed_to_new_accidents: list[self.RoadsFreezedToNewAccidents] = []
+        self.last_roads_accidenteds = deque(maxlen=1)
         
         self.SeverityEnum = SeverityEnum
         self.StatusEnum = StatusEnum
