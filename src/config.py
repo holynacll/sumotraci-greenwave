@@ -6,9 +6,8 @@ import sys
 # sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # import setup_environment # Carrega o ambiente de configuração
 
-# os.environ['SUMO_HOME'] = "/home/acll/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
-# os.environ['SUMO_HOME'] = "/home/acll/workspace/sumo-env/.venv/lib/python3.11/site-packages/sumo"
-os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+os.environ['SUMO_HOME'] = "/home/acll/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+# os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 
 
 if 'SUMO_HOME' in os.environ:
@@ -49,12 +48,14 @@ class Config:
         self.counter_tries_to_create = 0
         self.counter_assign_random_severity = 0
 
-        self.SEED: int = 51
-        self.VEHICLE_NUMBER: int = 7600 # Number of vehicles in the simulation
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 80.0 # seconds to block create accidents
-        self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
+        self.SEED: int = 53
+        self.VEHICLE_NUMBER: int = 9000 # Number of vehicles in the simulation
+        self.MAX_ELIGIBLE_ACCIDENTED_ROADS = 12 # Maximum number of accidented roads
+        self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
-
+        
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 60.0 # seconds to block create accidents
+        self.TIME_FOR_NEXT_ACCIDENT = 0.0 # seconds to create next accident
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 20.0 # seconds to dispatch emergency vehicle
         self.SIMULATION_END_TIME = 3600.0 # seconds
         self.LANE_LENGTH = 200.0 # The length of the lane in meters
@@ -67,8 +68,8 @@ class Config:
         self.HOSPITAL_POS_END = 'B1A1'
         # self.ELIGIBLE_ACCIDENTED_ROADS = ['B2C2', 'D2C2', 'A2B2', 'C0B0', 'D1D0' ] # Roads that can have accidents
         # self.ELIGIBLE_ACCIDENTED_ROADS = ['A3A4', 'B3C3', 'D3C3', 'E1E2', 'D0C0'] # Roads that can have accidents
-        self.ELIGIBLE_ACCIDENTED_ROADS = ['B3C3', 'D3C3'] # Roads that can have accidents
-
+        # self.ELIGIBLE_ACCIDENTED_ROADS = ['B3C3', 'D3C3'] # Roads that can have accidents
+        self.ELIGIBLE_ACCIDENTED_ROADS = [] # Roads that can have accidents
         self.buffer_vehicles_accidenteds = []
         self.buffer_emergency_vehicles = []
         self.buffer_tls_on_green_wave = []
@@ -88,8 +89,8 @@ class Config:
             self.SeverityEnum.LOW: (0, 255, 0, 255)
         }
         self.severity_speed_road_accidented = {
-            self.SeverityEnum.CRITICAL: 0.7,
-            self.SeverityEnum.HIGH: 1.5,
+            self.SeverityEnum.CRITICAL: 0.5,
+            self.SeverityEnum.HIGH: 1.0,
             self.SeverityEnum.MEDIUM: 2.0,
             self.SeverityEnum.LOW: 3.0
         }

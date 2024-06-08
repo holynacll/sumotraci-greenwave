@@ -81,10 +81,10 @@ def tripinfo_xml_to_csv(xml_file, csv_file):
             tripinfo_data = tripinfo.attrib
             tripinfo_data['seed'] = settings.SEED
             tripinfo_data['ALGORITHM'] = settings.ALGORITHM
-            tripinfo_data['CAR_FOLLOW_MODEL'] = settings.CAR_FOLLOW_MODEL
+            tripinfo_data['MAX_ELIGIBLE_ACCIDENTED_ROADS'] = settings.MAX_ELIGIBLE_ACCIDENTED_ROADS
             tripinfo_data['VEHICLE_NUMBER'] = settings.VEHICLE_NUMBER
-            tripinfo_data['DELAY_TO_DISPATCH_EMERGENCY_VEHICLE'] = (
-                settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE
+            tripinfo_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = (
+                settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
             )
 
             # If the CSV writer hasn't been set up yet, do it with the headers

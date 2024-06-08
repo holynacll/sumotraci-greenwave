@@ -27,6 +27,11 @@ def shouldContinueSim():
 
 def run():
     step = 0
+    road_ids: list[str] = traci.edge.getIDList()
+    settings.ELIGIBLE_ACCIDENTED_ROADS = list(
+        set([road_id for road_id in road_ids if not road_id.startswith(':') and len(road_id) == 4]) -
+        set([settings.HOSPITAL_POS_START, settings.HOSPITAL_POS_END])
+    )[:settings.MAX_ELIGIBLE_ACCIDENTED_ROADS]
     print('Running simulation...')
     print(f'Seed: {settings.SEED}')
     print(f'Number of Vehicles to insert: {settings.VEHICLE_NUMBER}')
@@ -73,10 +78,11 @@ def get_options():
                          default="summary.xml", help="define the summary output file path")
     optParser.add_option("--emissions_filepath", type="string",
                          default="emissions.xml", help="define the emissions output file path")
-    optParser.add_option("--car_follow_model", type="string",
-                         default=settings.CAR_FOLLOW_MODEL, help="define the car follow model")
-    optParser.add_option("--delay_dispatch", type="int",
-                        default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="define the time to freeze create new accidents")
+
+    optParser.add_option("--time_block_accident", type="string",
+                         default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="define param x")
+    optParser.add_option("--max_accident_edges", type="int",
+                        default=settings.MAX_ELIGIBLE_ACCIDENTED_ROADS, help="max_accident_edges")
     optParser.add_option("--vehicle_number", type="int",
                         default=settings.VEHICLE_NUMBER, help="define the number of vehicles to insert")
     optParser.add_option("--algorithm", type="string",
@@ -97,10 +103,10 @@ if __name__ == "__main__":
         sumoBinary = checkBinary('sumo-gui')
 
     settings.SEED = int(options.seed)
-    settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = float(options.delay_dispatch)
+    settings.TIME_TO_BLOCK_CREATE_ACCIDENTS = float(options.time_block_accident)
     settings.VEHICLE_NUMBER = float(options.vehicle_number)
     settings.ALGORITHM = options.algorithm
-    settings.CAR_FOLLOW_MODEL = options.car_follow_model
+    settings.MAX_ELIGIBLE_ACCIDENTED_ROADS = options.max_accident_edges
 
     generate_routefile(
         route_filepath=options.route_filepath,
@@ -126,14 +132,15 @@ if __name__ == "__main__":
          "--tripinfo-output", f'data/{options.tripinfo_filepath}',
         "-S",
         "-Q",
-    ])
-        
+    ])  
+
     run()
 
     print('from main.py')
     print(settings.ALGORITHM)
-    print(settings.CAR_FOLLOW_MODEL)
-    print(settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE)
+    print(settings.VEHICLE_NUMBER)
+    print(settings.MAX_ELIGIBLE_ACCIDENTED_ROADS)
+    print(settings.TIME_TO_BLOCK_CREATE_ACCIDENTS)
     print('Generating CSV files...')
     # results_dir = f'data/results-{settings.SEED}'
     # os.makedirs(results_dir, exist_ok=True)

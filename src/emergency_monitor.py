@@ -13,10 +13,6 @@ def speed_road_recovery(accidented_road_id):
 def remove_vehicle_from_accident(veh_accidented_id):
     for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
         if settings.buffer_vehicles_accidenteds[key]['veh_accidented_id'] == veh_accidented_id:
-            try:
-                traci.vehicle.remove(veh_accidented_id)
-            except traci.TraCIException:
-                pass
             accidented_road_id = settings.buffer_vehicles_accidenteds[key]['accidented_road_id']
             settings.buffer_roads_freezed_to_new_accidents.append(
                 settings.RoadsFreezedToNewAccidents(
@@ -27,7 +23,11 @@ def remove_vehicle_from_accident(veh_accidented_id):
             settings.buffer_vehicles_accidenteds.pop(key)
             speed_road_recovery(accidented_road_id=accidented_road_id)
             print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
-            return True
+            try:
+                traci.vehicle.remove(veh_accidented_id)
+                return True
+            except traci.TraCIException:
+                return False
     return False
 
 

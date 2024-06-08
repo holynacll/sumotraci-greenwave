@@ -18,8 +18,8 @@ def run_simulation(
     tripinfo_filename: str,
 
     number_of_vehicles: str,
-    delay_dispatch: str,
-    car_follow_model: str,
+    time_block_accident: str,
+    max_accident_edges: str,
     algorithm: str,
 ):
     # execute main.py com as configurações atualizadas
@@ -33,8 +33,8 @@ def run_simulation(
         '--tripinfo_filepath', tripinfo_filename, 
         
         '--vehicle_number', number_of_vehicles,
-        '--delay_dispatch', delay_dispatch,
-        '--car_follow_model', car_follow_model,
+        '--time_block_accident', time_block_accident,
+        '--max_accident_edges', max_accident_edges,
         '--algorithm', algorithm,
     ])
     return pathlib.Path(f'{os.getcwd()}/data/{tripinfo_filename[:-4]}.csv').resolve()
@@ -59,8 +59,8 @@ def main():
                 tripinfo_filename = f'tripinfo_{index}.xml'
 
                 number_of_vehicles: str = str(row['Quantidade de Veículos (int)'])
-                delay_dispatch: str = str(row['Tempo de Bloqueio de Criação de Acidente (steps)'])
-                car_follow_model: str = str(row['Modelo de Acompanhamento de Carro'])
+                time_block_accident: str = str(row['Tempo de Bloqueio de Criação de Acidente (steps)'])
+                max_accident_edges: str = str(row['Máximo de Vias Elegíveis Para Acidentes (int)'])
                 algorithm: str = str(row['Algoritmo'])
 
                 future = executor.submit(
@@ -72,8 +72,8 @@ def main():
                     trips_filename=trips_filename,
                     tripinfo_filename=tripinfo_filename,
                     number_of_vehicles=number_of_vehicles,
-                    delay_dispatch=delay_dispatch,
-                    car_follow_model=car_follow_model,
+                    time_block_accident=time_block_accident,
+                    max_accident_edges=max_accident_edges,
                     algorithm=algorithm,
                 )
                 futures.append(future)

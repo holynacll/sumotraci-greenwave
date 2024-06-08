@@ -1,17 +1,17 @@
-Nº Experimento,Quantidade de Veículos (int),Tempo de Bloqueio de Criação de Acidente (steps),Modelo de Acompanhamento de Carro,Algoritmo
-1,3800,80,Krauss,default
-2,3800,80,Krauss,proposto
-3,3800,80,EIDM,default
-4,3800,80,EIDM,proposto
-5,3800,180,Krauss,default
-6,3800,180,Krauss,proposto
-7,3800,180,EIDM,default
-8,3800,180,EIDM,proposto
-9,7600,80,Krauss,default
-10,7600,80,Krauss,proposto
-11,7600,80,EIDM,default
-12,7600,80,EIDM,proposto
-13,7600,180,Krauss,default
-14,7600,180,Krauss,proposto
-15,7600,180,EIDM,default
-16,7600,180,EIDM,proposto
+Nº Experimento,Quantidade de Veículos (int),Tempo de Bloqueio de Criação de Acidente (steps),Máximo de Vias Elegíveis Para Acidentes (int),Algoritmo
+1,4000,60,4,default
+2,4000,60,4,proposto
+3,4000,60,8,default
+4,4000,60,8,proposto
+5,4000,120,4,default
+6,4000,120,4,proposto
+7,4000,120,8,default
+8,4000,120,8,proposto
+9,8000,60,4,default
+10,8000,60,4,proposto
+11,8000,60,8,default
+12,8000,60,8,proposto
+13,8000,120,4,default
+14,8000,120,4,proposto
+15,8000,120,8,default
+16,8000,120,8,proposto

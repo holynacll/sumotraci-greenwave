@@ -24,6 +24,9 @@ def add_counter_tries_to_create():
 
 def create_accident():
     # se o tempo de bloqueio de criar acidentes for maior que o tempo de simulação, então não cria acidente
+    if traci.simulation.getTime() < settings.TIME_FOR_NEXT_ACCIDENT:
+        return
+    
     add_counter_tries_to_create()
 
     # se já atingiu o limite de acidentes, então não cria mais acidentes
@@ -33,7 +36,6 @@ def create_accident():
     for _ in range(len(settings.ELIGIBLE_ACCIDENTED_ROADS)):
         accidented_road_id: str = settings.ELIGIBLE_ACCIDENTED_ROADS[(settings.counter_tries_to_create - 1) % len(settings.ELIGIBLE_ACCIDENTED_ROADS)]
 
-    # for accidented_road_id in settings.ELIGIBLE_ACCIDENTED_ROADS:
         # se a via já está acidentada, então escolhe próxima via elegível
         if accidented_road_is_already_accidented(accidented_road_id=accidented_road_id):
             continue
@@ -110,4 +112,5 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
         }
     )
     add_counter_accidents()
+    settings.TIME_FOR_NEXT_ACCIDENT = traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
     print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been accidented in road {accidented_road_id} with severity {severity}')
