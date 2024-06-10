@@ -3,41 +3,29 @@ from config import (
     settings,
 )
 from emergency_call import scan_schedule_to_dispatch_emergency_vehicle
-
-
-def speed_road_recovery(accidented_road_id):
-    traci.edge.setMaxSpeed(accidented_road_id, settings.SPEED_ROAD)
-    print(f'{traci.simulation.getTime()} - Road {accidented_road_id} has been recovered')
-
-
-def remove_vehicle_from_accident(veh_accidented_id):
-    for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
-        if settings.buffer_vehicles_accidenteds[key]['veh_accidented_id'] == veh_accidented_id:
-            accidented_road_id = settings.buffer_vehicles_accidenteds[key]['accidented_road_id']
-            settings.buffer_roads_freezed_to_new_accidents.append(
-                settings.RoadsFreezedToNewAccidents(
-                    road_id=accidented_road_id,
-                    time=traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
-                )
-            )
-            settings.buffer_vehicles_accidenteds.pop(key)
-            speed_road_recovery(accidented_road_id=accidented_road_id)
-            print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
-            try:
-                traci.vehicle.remove(veh_accidented_id)
-                return True
-            except traci.TraCIException:
-                return False
-    return False
+from accident import remove_vehicle_from_accident, is_deadline_alive
 
 
 def monitor_emergency_vehicles():
     scan_schedule_to_dispatch_emergency_vehicle()
+    # monitor_accidented_vehicles_deadline()
     monitor_change_lane_accidented_vehicle()
     for key in range(len(settings.buffer_emergency_vehicles) -1, -1, -1):
         monitor_emergency_vehicles_on_the_way(key)
         monitor_emergency_vehicles_in_the_accident(key)
         monitor_emergency_vehicles_to_the_hospital(key)
+
+
+def monitor_accidented_vehicles_deadline():
+    # baseado no deadline por gravidade de veículo acidentado, verifica o tempo e se passou o veículo é removido
+    for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
+        veh_accidented_id = settings.buffer_vehicles_accidenteds[key]['veh_accidented_id']
+        severity = settings.buffer_vehicles_accidenteds[key]['severity']
+        time_accident = settings.buffer_vehicles_accidenteds[key]['time_accident']
+        if settings.buffer_vehicles_accidenteds[key]['time_recovered'] is None:
+            deadline = settings.severity_deadline[severity]
+            if not is_deadline_alive(time_accident, deadline):
+                remove_vehicle_from_accident(veh_accidented_id)
 
 
 def monitor_change_lane_accidented_vehicle():
@@ -72,6 +60,7 @@ def monitor_change_lane_accidented_vehicle():
                     # If no lane is available, reduce speed to avoid collision
                     traci.vehicle.slowDown(vehicle_follower_id, 0.5 * traci.vehicle.getAllowedSpeed(vehicle_follower_id), 5.0)
 
+
 def monitor_emergency_vehicles_to_the_hospital(key):
     emergency_vehicle = settings.buffer_emergency_vehicles[key]
     veh_emergency_id = emergency_vehicle['veh_emergency_id']
@@ -80,8 +69,6 @@ def monitor_emergency_vehicles_to_the_hospital(key):
     if status == settings.StatusEnum.TO_THE_HOSPITAL.value:
         actual_road = traci.vehicle.getRoadID(veh_emergency_id)
         if actual_road == hospital_pos_end:
-            if settings.buffer_emergency_vehicles[key]['vehicle_removed']:
-                settings.count_saveds += 1
             settings.buffer_emergency_vehicles.pop(key)
             print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has arrived at the hospital')
 
@@ -93,8 +80,7 @@ def monitor_emergency_vehicles_in_the_accident(key):
     status = emergency_vehicle['status']
     if status == settings.StatusEnum.IN_THE_ACCIDENT.value:
         settings.buffer_emergency_vehicles[key]['status'] = settings.StatusEnum.TO_THE_HOSPITAL.value
-        if remove_vehicle_from_accident(veh_accidented_id):
-            settings.buffer_emergency_vehicles[key]['vehicle_removed'] = True
+        remove_vehicle_from_accident(veh_accidented_id)
         print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left the accident')
 
 

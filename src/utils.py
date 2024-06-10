@@ -54,7 +54,7 @@ def add_emergency_vehicle_type_to_route_file(root):
     id="emergency_emergency"
     vClass="emergency"
     color="red"
-    minGap="2.5"
+    minGap="0.5"
     >
         <param key="has.bluelight.device" value="true"/>
     </vType>

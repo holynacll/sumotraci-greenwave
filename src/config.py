@@ -48,19 +48,19 @@ class Config:
         self.counter_tries_to_create = 0
         self.counter_assign_random_severity = 0
 
-        self.SEED: int = 53
+        self.SEED: int = 21749812
         self.VEHICLE_NUMBER: int = 9000 # Number of vehicles in the simulation
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 60.0 # seconds to block create accidents
         self.MAX_ELIGIBLE_ACCIDENTED_ROADS = 12 # Maximum number of accidented roads
-        self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
         
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 60.0 # seconds to block create accidents
+        self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
         self.TIME_FOR_NEXT_ACCIDENT = 0.0 # seconds to create next accident
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 20.0 # seconds to dispatch emergency vehicle
         self.SIMULATION_END_TIME = 3600.0 # seconds
         self.LANE_LENGTH = 200.0 # The length of the lane in meters
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
-        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 10.0 # GreenWave Transition time on seconds
+        self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 8.0 # GreenWave Transition time on seconds
         self.MAX_STOP_DURATION = 10 # not working
         self.SPEED_ROAD = 13.89 # The default speed on an edge (in m/s); default: 13.89
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0 # The minimum distance to the accident for the emergency vehicle to arrive
@@ -82,6 +82,13 @@ class Config:
         self.SeverityEnum = SeverityEnum
         self.StatusEnum = StatusEnum
         self.severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
+
+        self.severity_deadline = {
+            self.SeverityEnum.CRITICAL: 300,
+            self.SeverityEnum.HIGH: 450,
+            self.SeverityEnum.MEDIUM: 600,
+            self.SeverityEnum.LOW: 750,
+        }
         self.severity_colors = {
             self.SeverityEnum.CRITICAL: (255, 0, 0, 255),
             self.SeverityEnum.HIGH: (255, 165, 0, 255),
@@ -94,7 +101,6 @@ class Config:
             self.SeverityEnum.MEDIUM: 2.0,
             self.SeverityEnum.LOW: 3.0
         }
-
 
     # Método para atualizar configurações
     def update(self, **kwargs):

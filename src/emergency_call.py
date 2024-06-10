@@ -56,6 +56,7 @@ def dispatch_emergency_vehicle(accident):
     veh_emergency_id = accident['veh_emergency_id']
     veh_accidented_id = accident['veh_accidented_id']
     accidented_road_id = accident['accidented_road_id']
+    deadline = accident['deadline']
     severity = accident['severity']    
     
     try:
@@ -95,6 +96,7 @@ def dispatch_emergency_vehicle(accident):
         'veh_emergency_id':veh_emergency_id,
         'accidented_road_id': accidented_road_id,
         'severity': severity,
+        'deadline': deadline,
         'arrival_pos': arrival_pos,
         'hospital_pos_start': settings.HOSPITAL_POS_START,
         'hospital_pos_end': settings.HOSPITAL_POS_END,
@@ -122,7 +124,10 @@ def find_most_severe_recent_accident(): # EDF - Earliest Deadline First with Dea
         return None
     
     # Ordena os acidentes filtrados primeiro pela gravidade e então pelo tempo do acidente, do mais recente ao mais antigo
-    filtered_accidents.sort(key=lambda x: (settings.severity_order[x['severity']], -x['time_accident']))
+    # filtered_accidents.sort(key=lambda x: (settings.severity_order[x['severity']], -x['time_accident']))
+    
+    # Ordena os acidentes filtrados pelo deadline atualizado
+    filtered_accidents.sort(key=lambda x: (x['deadline']))
     
     # Retorna o acidente mais grave e mais recente dentro mesmo nível de gravidade
     return filtered_accidents[0]

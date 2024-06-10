@@ -9,11 +9,13 @@ def improve_traffic_for_emergency_vehicle():
     # ordena veículos de emergência por gravidade e mais recente
     emergency_vehicles_sorted_by_severity_and_most_recent = sorted(
         settings.buffer_emergency_vehicles,
-        key=lambda x: (settings.severity_order[x['severity']], -x['departure_time'])
+        key=lambda x: (x['deadline'])
     )
+    # print(f'Emergency Vehicles Sorted By Severity: {emergency_vehicles_sorted_by_severity_and_most_recent}')
     for emergency_vehicle in emergency_vehicles_sorted_by_severity_and_most_recent:
         veh_emergency_id = emergency_vehicle['veh_emergency_id']
         severity = emergency_vehicle['severity']
+        deadline = emergency_vehicle['deadline']
         try:
             next_tls_set = traci.vehicle.getNextTLS(veh_emergency_id)
         except traci.TraCIException:
@@ -31,12 +33,13 @@ def improve_traffic_for_emergency_vehicle():
                     tls_id=tls_id,
                     veh_emergency_id = veh_emergency_id,
                     severity = severity,
+                    deadline = deadline,
                 ):
                     print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has reached TLS {tls_id}')
-                    store_green_wave(tls_id, veh_emergency_id, severity)
+                    store_green_wave(tls_id, veh_emergency_id, severity, deadline)
 
 
-def store_green_wave(tls_id: str, veh_emergency_id: str, severity: str, status: str = 'INITIAL_TRANSITION'):
+def store_green_wave(tls_id: str, veh_emergency_id: str, severity: str, deadline, status: str = 'INITIAL_TRANSITION'):
     print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has reached TLS {tls_id} - status: {status} - and going to store green wave.')
     next_edges_sorted = get_next_edges(veh_emergency_id)
     controlled_lanes = traci.trafficlight.getControlledLanes(tls_id)
@@ -51,6 +54,7 @@ def store_green_wave(tls_id: str, veh_emergency_id: str, severity: str, status: 
             'tls_id': tls_id,
             'veh_emergency_id': veh_emergency_id,
             'severity': severity,
+            'deadline': deadline,
             'original_tl_program': traci.trafficlight.getProgram(tls_id),
             'ryg_state': None,
             'status': status,
@@ -170,15 +174,23 @@ def is_tls_allocated_to_a_more_serious_emergency_vehicle(
     tls_id,
     veh_emergency_id,
     severity,
+    deadline,
 ):
     for key, tls_on_green_wave in enumerate(settings.buffer_tls_on_green_wave):
         if tls_on_green_wave['tls_id'] == tls_id:
             # verifica se o veículo de emergência atual é o mesmo veículo de emergência alocado
             if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
                 return True
-            # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
-            if settings.severity_order[tls_on_green_wave['severity']] > settings.severity_order[severity]:
+            
+            # verifica se o veículo de emergência alocado é mais grave que o veículo de emergência requerente
+            if tls_on_green_wave['deadline'] < deadline:
                 return True
+             
+            # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
+            # if settings.severity_order[tls_on_green_wave['severity']] > settings.severity_order[severity]:
+            #     return True
+            
+            # inicia transição final do green wave, na próxima iteração pega o veículo de emergência mais grave
             settings.buffer_tls_on_green_wave[key]['status'] == 'FINAL_TRANSITION'
             return True
     return False

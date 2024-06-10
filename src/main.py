@@ -42,15 +42,18 @@ def run():
         while shouldContinueSim():
             traci.simulationStep()
             monitor_emergency_vehicles() # monitor emergency vehicles and handle them when they arrive at the accident
-            if traci.simulation.getTime() < settings.SIMULATION_END_TIME:
-                if traci.simulation.getTime()%10 == 0:
+            actual_time = traci.simulation.getTime()
+            if actual_time < settings.SIMULATION_END_TIME:
+                if actual_time % 10 == 0:
                     create_accident()
-                if traci.simulation.getTime()%10 == 0:
+                if actual_time % 10 == 0:
                     call_emergency_vehicle()
             if settings.ALGORITHM == 'proposto':
                 improve_traffic_for_emergency_vehicle() # green wave solution
             step += 1
-            # print(f'Step: {step} - Time: {traci.simulation.getTime()}', end='\r')
+            # print(f'Step: {step} - Time: {actual_time}', end='\r')
+            # if actual_time > settings.SIMULATION_END_TIME:
+            #     break
         print('Simulation finished!')
         print(f'Saveds: {settings.count_saveds}')
         print(f'Unsaveds: {settings.count_accidents - settings.count_saveds}')

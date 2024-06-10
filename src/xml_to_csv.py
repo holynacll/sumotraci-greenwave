@@ -86,6 +86,8 @@ def tripinfo_xml_to_csv(xml_file, csv_file):
             tripinfo_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = (
                 settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
             )
+            tripinfo_data['SAVEDS'] = settings.count_saveds
+            tripinfo_data['UNSAVEDS'] = settings.count_accidents - settings.count_saveds
 
             # If the CSV writer hasn't been set up yet, do it with the headers
             if csv_writer is None:

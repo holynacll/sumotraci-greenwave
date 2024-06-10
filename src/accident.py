@@ -22,7 +22,7 @@ def add_counter_tries_to_create():
     settings.counter_tries_to_create += 1
 
 
-def create_accident():
+def create_accident():   
     # se o tempo de bloqueio de criar acidentes for maior que o tempo de simulação, então não cria acidente
     if traci.simulation.getTime() < settings.TIME_FOR_NEXT_ACCIDENT:
         return
@@ -65,7 +65,7 @@ def create_accident():
 
 def vehicle_is_in_a_valid_position_lane(veh_accidented_id):
     position = traci.vehicle.getLanePosition(veh_accidented_id)
-    return position > 0.4 * settings.LANE_LENGTH and position < 0.6 * settings.LANE_LENGTH
+    return position > 0.1 * settings.LANE_LENGTH and position < 0.3 * settings.LANE_LENGTH
 
 
 def accidented_road_is_already_accidented(accidented_road_id):
@@ -97,8 +97,17 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
     severity = assign_random_severity()
     color_highlight = settings.severity_colors[severity]
     speed_road_accidented = settings.severity_speed_road_accidented[severity]
+    estimated_deadline = settings.severity_deadline[severity] + traci.simulation.getTime()
     traci.edge.setMaxSpeed(accidented_road_id, speed_road_accidented)
-    traci.vehicle.setSpeed(veh_accidented_id, 0)
+    # traci.vehicle.setSpeed(veh_accidented_id, 0)
+    traci.vehicle.slowDown(veh_accidented_id, 0.5 * traci.vehicle.getAllowedSpeed(veh_accidented_id), 5.0)
+    traci.vehicle.setStop(
+        veh_accidented_id, 
+        edgeID=accidented_road_id,
+        pos=traci.vehicle.getLanePosition(veh_accidented_id)+25.0,
+        laneIndex=traci.vehicle.getLaneIndex(veh_accidented_id),
+        duration=4000
+    )
     traci.vehicle.highlight(veh_accidented_id, color_highlight)
     settings.buffer_vehicles_accidenteds.append(
         {
@@ -107,6 +116,7 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
             'lane_accidented_id': traci.vehicle.getLaneID(veh_accidented_id),
             'severity': severity,
             'time_accident': traci.simulation.getTime(),
+            'deadline': estimated_deadline,
             'time_recovered': None,
             'veh_emergency_id': None,
         }
@@ -114,3 +124,43 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
     add_counter_accidents()
     settings.TIME_FOR_NEXT_ACCIDENT = traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
     print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been accidented in road {accidented_road_id} with severity {severity}')
+
+
+def remove_vehicle_from_accident(veh_accidented_id):
+    for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
+        if settings.buffer_vehicles_accidenteds[key]['veh_accidented_id'] == veh_accidented_id:
+            accidented_road_id = settings.buffer_vehicles_accidenteds[key]['accidented_road_id']
+            settings.buffer_roads_freezed_to_new_accidents.append(
+                settings.RoadsFreezedToNewAccidents(
+                    road_id=accidented_road_id,
+                    time=traci.simulation.getTime() + settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
+                )
+            )
+            # severity = settings.buffer_vehicles_accidenteds[key]['severity']
+            # time_accident = settings.buffer_vehicles_accidenteds[key]['time_accident']
+            # if settings.buffer_vehicles_accidenteds[key]['time_recovered'] is None:
+            deadline = settings.buffer_vehicles_accidenteds[key]['deadline']
+            if is_deadline_alive(deadline):
+                settings.count_saveds += 1
+            settings.buffer_vehicles_accidenteds.pop(key)
+            speed_road_recovery(accidented_road_id=accidented_road_id)
+            try:
+                traci.vehicle.remove(veh_accidented_id)
+            except traci.TraCIException:
+                pass
+            print(f'{traci.simulation.getTime()} - Vehicle {veh_accidented_id} has been removed from the accident')
+            return None
+
+
+def is_deadline_alive(estimated_deadline: float):
+    # verifica se passou do tempo de deadline
+    # return traci.simulation.getTime() - time_accident < deadline
+    print(f'Deadline: {estimated_deadline} - Actual Time: {traci.simulation.getTime()}')
+    if estimated_deadline < traci.simulation.getTime():
+        return False
+    return True
+
+
+def speed_road_recovery(accidented_road_id):
+    traci.edge.setMaxSpeed(accidented_road_id, settings.SPEED_ROAD)
+    print(f'{traci.simulation.getTime()} - Road {accidented_road_id} has been recovered')
