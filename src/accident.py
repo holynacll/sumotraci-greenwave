@@ -97,7 +97,7 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
     severity = assign_random_severity()
     color_highlight = settings.severity_colors[severity]
     speed_road_accidented = settings.severity_speed_road_accidented[severity]
-    estimated_deadline = settings.severity_deadline[severity] + traci.simulation.getTime()
+    deadline = settings.severity_gonden_time[severity] + traci.simulation.getTime()
     traci.edge.setMaxSpeed(accidented_road_id, speed_road_accidented)
     # traci.vehicle.setSpeed(veh_accidented_id, 0)
     traci.vehicle.slowDown(veh_accidented_id, 0.5 * traci.vehicle.getAllowedSpeed(veh_accidented_id), 5.0)
@@ -116,7 +116,7 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
             'lane_accidented_id': traci.vehicle.getLaneID(veh_accidented_id),
             'severity': severity,
             'time_accident': traci.simulation.getTime(),
-            'deadline': estimated_deadline,
+            'deadline': deadline,
             'time_recovered': None,
             'veh_emergency_id': None,
         }
@@ -164,3 +164,14 @@ def is_deadline_alive(estimated_deadline: float):
 def speed_road_recovery(accidented_road_id):
     traci.edge.setMaxSpeed(accidented_road_id, settings.SPEED_ROAD)
     print(f'{traci.simulation.getTime()} - Road {accidented_road_id} has been recovered')
+
+
+def generate_elegible_accidented_roads():
+    random.seed(settings.SEED)
+    road_ids: list[str] = traci.edge.getIDList()
+    possible_accidented_road_ids = list(
+        set([road_id for road_id in road_ids if not road_id.startswith(':') and len(road_id) == 4]) -
+        set([settings.HOSPITAL_POS_START, settings.HOSPITAL_POS_END])
+    )
+    settings.ELIGIBLE_ACCIDENTED_ROADS = random.sample(possible_accidented_road_ids, settings.MAX_ELIGIBLE_ACCIDENTED_ROADS)
+    

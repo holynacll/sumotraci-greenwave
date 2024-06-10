@@ -83,7 +83,7 @@ class Config:
         self.StatusEnum = StatusEnum
         self.severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
 
-        self.severity_deadline = {
+        self.severity_gonden_time = {
             self.SeverityEnum.CRITICAL: 300,
             self.SeverityEnum.HIGH: 450,
             self.SeverityEnum.MEDIUM: 600,

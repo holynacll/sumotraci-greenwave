@@ -7,7 +7,7 @@ from config import (
 import optparse
 import traceback
 
-from accident import create_accident
+from accident import create_accident, generate_elegible_accidented_roads
 from emergency_call import call_emergency_vehicle
 from emergency_monitor import monitor_emergency_vehicles
 from optimization_green_wave import improve_traffic_for_emergency_vehicle
@@ -27,11 +27,6 @@ def shouldContinueSim():
 
 def run():
     step = 0
-    road_ids: list[str] = traci.edge.getIDList()
-    settings.ELIGIBLE_ACCIDENTED_ROADS = list(
-        set([road_id for road_id in road_ids if not road_id.startswith(':') and len(road_id) == 4]) -
-        set([settings.HOSPITAL_POS_START, settings.HOSPITAL_POS_END])
-    )[:settings.MAX_ELIGIBLE_ACCIDENTED_ROADS]
     print('Running simulation...')
     print(f'Seed: {settings.SEED}')
     print(f'Number of Vehicles to insert: {settings.VEHICLE_NUMBER}')
@@ -39,6 +34,7 @@ def run():
     print(f'Car Follow Model: {settings.CAR_FOLLOW_MODEL}')
     print(f'Algorithm: {settings.ALGORITHM}')
     try:
+        generate_elegible_accidented_roads()
         while shouldContinueSim():
             traci.simulationStep()
             monitor_emergency_vehicles() # monitor emergency vehicles and handle them when they arrive at the accident

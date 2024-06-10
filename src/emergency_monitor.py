@@ -16,16 +16,16 @@ def monitor_emergency_vehicles():
         monitor_emergency_vehicles_to_the_hospital(key)
 
 
-def monitor_accidented_vehicles_deadline():
-    # baseado no deadline por gravidade de veículo acidentado, verifica o tempo e se passou o veículo é removido
-    for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
-        veh_accidented_id = settings.buffer_vehicles_accidenteds[key]['veh_accidented_id']
-        severity = settings.buffer_vehicles_accidenteds[key]['severity']
-        time_accident = settings.buffer_vehicles_accidenteds[key]['time_accident']
-        if settings.buffer_vehicles_accidenteds[key]['time_recovered'] is None:
-            deadline = settings.severity_deadline[severity]
-            if not is_deadline_alive(time_accident, deadline):
-                remove_vehicle_from_accident(veh_accidented_id)
+# def monitor_accidented_vehicles_deadline():
+#     # baseado no deadline por gravidade de veículo acidentado, verifica o tempo e se passou o veículo é removido
+#     for key in range(len(settings.buffer_vehicles_accidenteds) - 1, -1, -1):
+#         veh_accidented_id = settings.buffer_vehicles_accidenteds[key]['veh_accidented_id']
+#         severity = settings.buffer_vehicles_accidenteds[key]['severity']
+#         time_accident = settings.buffer_vehicles_accidenteds[key]['time_accident']
+#         if settings.buffer_vehicles_accidenteds[key]['time_recovered'] is None:
+#             deadline = settings.severity_gonden_time[severity]
+#             if not is_deadline_alive(time_accident, deadline):
+#                 remove_vehicle_from_accident(veh_accidented_id)
 
 
 def monitor_change_lane_accidented_vehicle():

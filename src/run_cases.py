@@ -41,7 +41,7 @@ def run_simulation(
 
 
 def main():
-    seeds = [42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    seeds = [42, 123, 2023, 1001, 2024, 7, 555, 888, 999, 314]
     # Carregar os casos de teste do arquivo CSV
     filepath = f'{os.getcwd()}/scripts/cases.csv'
     df = pd.read_csv(filepath)
