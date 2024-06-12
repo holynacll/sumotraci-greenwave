@@ -3,5 +3,6 @@ __pycache__
 src/data
 src/plot
 src/output
+src/output_bkp
 src/__pycache__
 src/__pycache__/

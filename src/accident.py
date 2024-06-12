@@ -106,7 +106,7 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
         edgeID=accidented_road_id,
         pos=traci.vehicle.getLanePosition(veh_accidented_id)+25.0,
         laneIndex=traci.vehicle.getLaneIndex(veh_accidented_id),
-        duration=4000
+        duration=1500
     )
     traci.vehicle.highlight(veh_accidented_id, color_highlight)
     settings.buffer_vehicles_accidenteds.append(
@@ -139,9 +139,6 @@ def remove_vehicle_from_accident(veh_accidented_id):
             # severity = settings.buffer_vehicles_accidenteds[key]['severity']
             # time_accident = settings.buffer_vehicles_accidenteds[key]['time_accident']
             # if settings.buffer_vehicles_accidenteds[key]['time_recovered'] is None:
-            deadline = settings.buffer_vehicles_accidenteds[key]['deadline']
-            if is_deadline_alive(deadline):
-                settings.count_saveds += 1
             settings.buffer_vehicles_accidenteds.pop(key)
             speed_road_recovery(accidented_road_id=accidented_road_id)
             try:
@@ -166,12 +163,17 @@ def speed_road_recovery(accidented_road_id):
     print(f'{traci.simulation.getTime()} - Road {accidented_road_id} has been recovered')
 
 
-def generate_elegible_accidented_roads():
+def generate_elegible_accidented_roads_and_hospital_positions():
     random.seed(settings.SEED)
     road_ids: list[str] = traci.edge.getIDList()
-    possible_accidented_road_ids = list(
-        set([road_id for road_id in road_ids if not road_id.startswith(':') and len(road_id) == 4]) -
-        set([settings.HOSPITAL_POS_START, settings.HOSPITAL_POS_END])
-    )
-    settings.ELIGIBLE_ACCIDENTED_ROADS = random.sample(possible_accidented_road_ids, settings.MAX_ELIGIBLE_ACCIDENTED_ROADS)
+    possible_road_ids = sorted(list(
+        set([road_id for road_id in road_ids if not road_id.startswith(':') and len(road_id) == 4])
+    ))
+    hospital_positions = random.sample(possible_road_ids, 2)
+    settings.HOSPITAL_POS_START = hospital_positions[0]
+    settings.HOSPITAL_POS_END = hospital_positions[1]
     
+    possible_accidented_road_ids = sorted(list(set(possible_road_ids) - set([settings.HOSPITAL_POS_START, settings.HOSPITAL_POS_END])))
+    settings.ELIGIBLE_ACCIDENTED_ROADS = random.sample(possible_accidented_road_ids, settings.MAX_ELIGIBLE_ACCIDENTED_ROADS)
+    print(f"Eligible accidented roads: {settings.ELIGIBLE_ACCIDENTED_ROADS}")
+    print(f"Hospital positions: {settings.HOSPITAL_POS_START} - {settings.HOSPITAL_POS_END}")

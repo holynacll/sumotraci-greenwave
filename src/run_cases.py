@@ -17,9 +17,9 @@ def run_simulation(
     trips_filename: str,
     tripinfo_filename: str,
 
-    number_of_vehicles: str,
+    delay_dispatch: str,
     time_block_accident: str,
-    max_accident_edges: str,
+    car_following_model: str,
     algorithm: str,
 ):
     # execute main.py com as configurações atualizadas
@@ -32,9 +32,9 @@ def run_simulation(
         '--trips_filepath', trips_filename,
         '--tripinfo_filepath', tripinfo_filename, 
         
-        '--vehicle_number', number_of_vehicles,
+        '--delay_dispatch_emergency_vehicle', delay_dispatch,
         '--time_block_accident', time_block_accident,
-        '--max_accident_edges', max_accident_edges,
+        '--car_follow_model', car_following_model,
         '--algorithm', algorithm,
     ])
     return pathlib.Path(f'{os.getcwd()}/data/{tripinfo_filename[:-4]}.csv').resolve()
@@ -58,9 +58,9 @@ def main():
                 trips_filename = f'data/trips_{index}.trips.xml'
                 tripinfo_filename = f'tripinfo_{index}.xml'
 
-                number_of_vehicles: str = str(row['Quantidade de Veículos (int)'])
-                time_block_accident: str = str(row['Tempo de Bloqueio de Criação de Acidente (steps)'])
-                max_accident_edges: str = str(row['Máximo de Vias Elegíveis Para Acidentes (int)'])
+                delay_dispatch: str = str(row['Tempo de Atraso no Despacho do Veículo de Emergência (seg)'])
+                time_block_accident: str = str(row['Tempo de Bloqueio de Criação de Acidente (seg)'])
+                car_following_model: str = str(row['Modelo Seguidor de Carro'])
                 algorithm: str = str(row['Algoritmo'])
 
                 future = executor.submit(
@@ -71,9 +71,9 @@ def main():
                     route_filename=route_filename,
                     trips_filename=trips_filename,
                     tripinfo_filename=tripinfo_filename,
-                    number_of_vehicles=number_of_vehicles,
+                    delay_dispatch=delay_dispatch,
                     time_block_accident=time_block_accident,
-                    max_accident_edges=max_accident_edges,
+                    car_following_model=car_following_model,
                     algorithm=algorithm,
                 )
                 futures.append(future)

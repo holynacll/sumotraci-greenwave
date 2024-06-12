@@ -7,7 +7,7 @@ from config import (
 import optparse
 import traceback
 
-from accident import create_accident, generate_elegible_accidented_roads
+from accident import create_accident, generate_elegible_accidented_roads_and_hospital_positions
 from emergency_call import call_emergency_vehicle
 from emergency_monitor import monitor_emergency_vehicles
 from optimization_green_wave import improve_traffic_for_emergency_vehicle
@@ -29,12 +29,13 @@ def run():
     step = 0
     print('Running simulation...')
     print(f'Seed: {settings.SEED}')
-    print(f'Number of Vehicles to insert: {settings.VEHICLE_NUMBER}')
+    # print(f'Number of Vehicles to insert: {settings.VEHICLE_NUMBER}')
+    print(f'Time to block create accidents: {settings.TIME_TO_BLOCK_CREATE_ACCIDENTS}')
     print(f'Delay to dispatch emergency vehicles: {settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE}')
     print(f'Car Follow Model: {settings.CAR_FOLLOW_MODEL}')
     print(f'Algorithm: {settings.ALGORITHM}')
     try:
-        generate_elegible_accidented_roads()
+        generate_elegible_accidented_roads_and_hospital_positions()
         while shouldContinueSim():
             traci.simulationStep()
             monitor_emergency_vehicles() # monitor emergency vehicles and handle them when they arrive at the accident
@@ -78,14 +79,16 @@ def get_options():
     optParser.add_option("--emissions_filepath", type="string",
                          default="emissions.xml", help="define the emissions output file path")
 
-    optParser.add_option("--time_block_accident", type="string",
-                         default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="define param x")
-    optParser.add_option("--max_accident_edges", type="int",
-                        default=settings.MAX_ELIGIBLE_ACCIDENTED_ROADS, help="max_accident_edges")
+    optParser.add_option("--time_block_accident", type="int",
+                         default=settings.TIME_TO_BLOCK_CREATE_ACCIDENTS, help="time_block_accident")
+    optParser.add_option("--delay_dispatch_emergency_vehicle", type="int",
+                        default=settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE, help="delay_dispatch_emergency_vehicle")
     optParser.add_option("--vehicle_number", type="int",
                         default=settings.VEHICLE_NUMBER, help="define the number of vehicles to insert")
     optParser.add_option("--algorithm", type="string",
                         default=settings.ALGORITHM, help="define the algorithm to be used")
+    optParser.add_option("--car_follow_model", type="string",
+                        default=settings.CAR_FOLLOW_MODEL, help="car follow model")
     options, args = optParser.parse_args()
     return options
 
@@ -103,9 +106,11 @@ if __name__ == "__main__":
 
     settings.SEED = int(options.seed)
     settings.TIME_TO_BLOCK_CREATE_ACCIDENTS = float(options.time_block_accident)
-    settings.VEHICLE_NUMBER = float(options.vehicle_number)
+    settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = float(options.delay_dispatch_emergency_vehicle)
+    settings.CAR_FOLLOW_MODEL = options.car_follow_model
     settings.ALGORITHM = options.algorithm
-    settings.MAX_ELIGIBLE_ACCIDENTED_ROADS = options.max_accident_edges
+    # settings.VEHICLE_NUMBER = float(options.vehicle_number)
+    # settings.MAX_ELIGIBLE_ACCIDENTED_ROADS = options.max_accident_edges
 
     generate_routefile(
         route_filepath=options.route_filepath,
@@ -137,8 +142,8 @@ if __name__ == "__main__":
 
     print('from main.py')
     print(settings.ALGORITHM)
-    print(settings.VEHICLE_NUMBER)
-    print(settings.MAX_ELIGIBLE_ACCIDENTED_ROADS)
+    print(settings.CAR_FOLLOW_MODEL)
+    print(settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE)
     print(settings.TIME_TO_BLOCK_CREATE_ACCIDENTS)
     print('Generating CSV files...')
     # results_dir = f'data/results-{settings.SEED}'
