@@ -1,8 +1,8 @@
 .venv
 __pycache__
 src/data
-src/plot
 src/output
 src/output_bkp
+src/output_bkp2
 src/__pycache__
 src/__pycache__/

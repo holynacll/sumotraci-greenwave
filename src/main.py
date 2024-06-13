@@ -49,8 +49,12 @@ def run():
                 improve_traffic_for_emergency_vehicle() # green wave solution
             step += 1
             # print(f'Step: {step} - Time: {actual_time}', end='\r')
-            # if actual_time > settings.SIMULATION_END_TIME:
-            #     break
+            if (
+                actual_time > settings.SIMULATION_END_TIME
+                and len(settings.buffer_emergency_vehicles) == 0
+                and len(settings.buffer_vehicles_accidenteds) == 0
+            ):
+                break
         print('Simulation finished!')
         print(f'Saveds: {settings.count_saveds}')
         print(f'Unsaveds: {settings.count_accidents - settings.count_saveds}')

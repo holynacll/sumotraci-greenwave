@@ -50,17 +50,17 @@ class Config:
 
         # self.SEED: int = 2174981255
         self.SEED: int = 21749812
-        self.VEHICLE_NUMBER: int = 3000 # Number of vehicles in the simulation
+        self.VEHICLE_NUMBER: int = 4800 # Number of vehicles in the simulation
         
-        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 30.0 # seconds to block create accidents 30 or 120
+        self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 50.0 # seconds to block create accidents 50 or 100
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 120.0 # seconds to dispatch emergency vehicle 30 or 120
         self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
 
         self.MAX_ELIGIBLE_ACCIDENTED_ROADS = 4 # Maximum number of accidented roads
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
-        self.TIME_FOR_NEXT_ACCIDENT = 0.0 # seconds to create next accident
-        self.SIMULATION_END_TIME = 900.0 # seconds 3600.0
+        self.TIME_FOR_NEXT_ACCIDENT = 300.0 # seconds to create next accident
+        self.SIMULATION_END_TIME = 1200.0 # seconds 3600.0
         self.LANE_LENGTH = 300.0 # The length of the lane in meters
         self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 8.0 # GreenWave Transition time on seconds
         self.MAX_STOP_DURATION = 10 # not working
