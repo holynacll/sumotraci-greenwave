@@ -17,23 +17,15 @@ from config import settings
 def generate_routefile(route_filepath: str, trips_filepath: str, seed: int):
     road_filepath = "data/road.net.xml"
     route_filepath = f"data/{route_filepath}"
-    # trip_attributes = r"--trip-attributes='color=\"0,0,1\" accel=\"0.8\" decel=\"4.5\" sigma=\"0.5\" length=\"5\" minGap=\"2.5\" maxSpeed=\"16.67\" guiShape=\"passenger\" lcStrategic=\"0.5\"'"
     trip_attributes_1 = 'type="passenger_idm"'
-    # trip_attributes_1 = 'type="passenger"'
-    # trip_attributes_2 = 'lcStrategic="10.0"'
     cmd = (
         f"python {os.environ['SUMO_HOME']}/tools/randomTrips.py -n {road_filepath} -r {route_filepath}"
         f" -b 0 -e {settings.SIMULATION_END_TIME} -p {((settings.SIMULATION_END_TIME - 0) / settings.VEHICLE_NUMBER)}"
         f" -o {trips_filepath} --validate --fringe-factor 1000"
         f" --seed {seed}"
-        # "  --random -l"
-        # f" --vehicle-class passenger "
         f" --trip-attributes '{trip_attributes_1}'"
-        # f" --trip-attributes '{trip_attributes_2}'"
     )
     os.system(cmd)
-    # cmd_list = cmd.split(" ")
-    # subprocess.run(cmd_list, check=True)
 
     # Parse the existing XML route file
     tree = ET.parse(route_filepath)

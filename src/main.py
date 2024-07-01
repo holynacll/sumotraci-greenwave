@@ -113,8 +113,6 @@ if __name__ == "__main__":
     settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = float(options.delay_dispatch_emergency_vehicle)
     settings.CAR_FOLLOW_MODEL = options.car_follow_model
     settings.ALGORITHM = options.algorithm
-    # settings.VEHICLE_NUMBER = float(options.vehicle_number)
-    # settings.MAX_ELIGIBLE_ACCIDENTED_ROADS = options.max_accident_edges
 
     generate_routefile(
         route_filepath=options.route_filepath,
@@ -132,39 +130,25 @@ if __name__ == "__main__":
     traci.start([
         sumoBinary,
         "-c", options.sumocfg_filepath,
-        # "--lanechange.duration", "5.0",
         "--lateral-resolution", "1.8",
         "--device.bluelight.reactiondist", "1.0",
-        # "--device.bluelight.deterministic", "true",
         # "--emission-output", f'data/{options.emissions_filepath}',
          "--tripinfo-output", f'data/{options.tripinfo_filepath}',
         "-S",
         "-Q",
     ])  
 
+    # Simulation starting
     run()
-
-    print('from main.py')
+    
+    print('Simulation finished')
     print(settings.ALGORITHM)
     print(settings.CAR_FOLLOW_MODEL)
     print(settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE)
     print(settings.TIME_TO_BLOCK_CREATE_ACCIDENTS)
     print('Generating CSV files...')
-    # results_dir = f'data/results-{settings.SEED}'
-    # os.makedirs(results_dir, exist_ok=True)
-    # emission_xml_to_csv(
-    #     f'data/{options.emissions_filepath}',
-    #     f'data/{options.emissions_filepath[:-4]}.csv',
-    # )
     tripinfo_xml_to_csv(
         f'data/{options.tripinfo_filepath}',
         f'data/{options.tripinfo_filepath[:-4]}.csv',
     )
-    # summary_xml_to_csv(
-    #     f'data/{options.summary_filepath}',
-    #     f'{results_dir}/{options.summary_filepath[:-4]}.csv',
-    #     # algorithm,
-    #     # # proportion_delay_call_emergency_vehicle_to_accident,
-    #     # simulation_end_time,
-    # )
     print('CSV files generated!')
