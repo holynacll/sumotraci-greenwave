@@ -1,16 +1,15 @@
-# Processo Experimentla Sistemático
-  - Entenda o problema, estabeleça as perguntas e defina os objetivos
-    - Problema:
-      - É preciso que os veículos de emergência tenham um caminho mais livre possível. Veículos de Emergência tem passe livre para passar de sinais vermelhos, porém com o alto volume veículos no trânsito, aliado ao controle dos semáforos padrão (abre e fecha de forma temporizada), congestionamentos podem ser produzidos no caminho por onde o veículo de emergência irá passar. Nesse momento, os veículos normais se tornam obstáculos que não permitem a passagem do veículo de emergência, prejudicando na duração da viagem. 
-    - Pergunta:
-      - De que forma é possível melhorar o trânsito para que o veículo de emergência tenha um caminho mais livre possível?
-        - Modificando o comportamento do controle de sinais de trânsito para que se abram a medida que veículos de emergência se aproximem, fazendo com que o fluxo do caminho que o veículo de emergência percorre melhore, onde os veículos normais vão deixar de ser obstáculos parados em frente ao veículo de emergência, e consequentemente o fluxo do veículo de emergência melhore também. Dessa forma, reduzindo a duração da viagem.
-  - Selecione as métricas:
+# Processo Experimental Sistemático
+  - ## Problema:
+    - É preciso que os veículos de emergência tenham um caminho mais livre possível. Veículos de Emergência tem passe livre para passar de sinais vermelhos, porém com o alto volume veículos no trânsito, aliado ao controle dos semáforos padrão (abre e fecha de forma temporizada), congestionamentos podem ser produzidos no caminho por onde o veículo de emergência irá passar. Nesse momento, os veículos normais se tornam obstáculos que não permitem a passagem do veículo de emergência, prejudicando na duração da viagem. 
+  - ## Pergunta:
+    - De que forma é possível melhorar o trânsito para que o veículo de emergência tenha um caminho mais livre possível?
+    - Modificando o comportamento do controle de sinais de trânsito para que se abram a medida que veículos de emergência se aproximem, fazendo com que o fluxo do caminho que o veículo de emergência percorre melhore, onde os veículos normais vão deixar de ser obstáculos parados em frente ao veículo de emergência, e consequentemente o fluxo do veículo de emergência melhore também. Dessa forma, reduzindo a duração da viagem.
+  - ## Métricas selecionadas:
     - Duração da viagem (segundos)
     - Tempo perdido na viagem (somátorio do tempo de paradas, quando velocidade do veículo == 0 por pelo menos > 0.01 segundo, começa a contar o tempo perdido) (segundos)
     - Quantificação das ocorrências de acidentes salvos e não salvos de acordo com deadline (int)
 
-  - Identifique os parâmetros:
+  - ## Parâmetros identificados:
     - Número de veículos: 4800
     - Frequência de acidentes: 1 acidente a cada 50 ou 100 segundos (selecionado)
     - Tempo de atraso no envio de veículo de emergência: 30 ou 120 segundos (selecionado)
@@ -34,16 +33,17 @@
       - Médio: 1200
       - Baixo: 1500
     - Velocidade da via acidentada: 1.0 m/s
-  - Parâmetros Selecionados (Fatores):
-    - Frequência de acidentes: 1 acidente a cada 50 ou 100 segundos (selecionado)
-    - Tempo de atraso no envio de veículo de emergência: 30 ou 120 segundos (selecionado)
+  - ## Parâmetros Selecionados (Fatores):
+    - Frequência de acidentes: 1 acidente a cada 50 ou 100 segundos
+     - Tempo de atraso no envio de veículo de emergência: 30 ou 120 segundos após a ocorrência do acidente
     - Modelo de seguimento de carro: Krauss ou EIDM
     - Algoritmo de controle dos semáforos: Padrão Temporizado ou Green Wave
-  - Selecione a técnica:
-    - Simulação de Trânsito utilizando o SUMO (Simulation of Urban MObility).
-    - A simulação será reproduzida em um cenario modelo de trânsito de Manhattan, onde um número fixo de veículos trafegam com viagens aleatórias na via, são aleatóriamente selecionados para representarem um veículo acidentado que ficará parado na via esperando um veículo de emergência chegar para resolver esse acidente na via e seguir o caminho para algum hospital.
-    - a configuração da via será feita pelo script:  netgenerate --grid --grid.number=4 --grid.length=300 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true
-    - a configuração e geração dos veículo será feita pelo script dinâmicamente executado, antes de todo início de simulação:
+  - Técnica adotada:
+    - Simulação de Trânsito utilizando o SUMO (Simulation of Urban MObility) em conjunto com TraCI API integrado com a linguagem de programação Python.
+    - A simulação é reproduzida em um cenario modelo de trânsito de Manhattan, gerado pela ferramenta netgenerate (https://sumo.dlr.de/docs/netgenerate.html), onde um número fixo de veículos trafegam com viagens aleatórias na via, por meio do script randomTrips.py (https://sumo.dlr.de/docs/Tools/Trip.html), feito pela comunidade do SUMO.
+    - Na simulação são criado acidentes artificiais, reproduzidos através de um veículo selecionado dinâmicamente de forma pseudo-aleatória, que será parado no meio da viagem e a via onde parou ficará com a velocidade reduzida para simular um acidente. Em seguida, é cadastrado um veículo de emergência para socorrer o veículo acidentado. O veículo de emergência é inserido na simulação após o tempo configurado de despacho (DISPATCH), onde inicia a viagem em uma via representada pelo HOSPITAL_POS_START, que segue até o veículo acidentado, e caminha até a via representada pelo HOSPTIAL_POS_END que marca a finalização do atendimento e é verificado o deadline do acidente  incrementando as métricas de SAVEDS e UNSAVEDS.
+    - a configuração da via é feita pelo script:  netgenerate --grid --grid.number=4 --grid.length=300 --default.lanenumber 3 --default-junction-type traffic_light --output-file=data/road.net.xml --no-turnarounds true
+    - a configuração e geração dos veículo é feita pelo script dinâmicamente executado, antes de todo início de simulação:
     ```
     def generate_routefile(route_filepath: str, trips_filepath: str, seed: int):
     road_filepath = "data/road.net.xml"
@@ -106,7 +106,7 @@
         # Insert the new element as the first child of the root
         root.insert(0, new_element)
     ```
-    - a configuração completa da simulação será feita dinâmicamente antes de todo início de simulação. Durante a simulação será capturados as métricas especificadas e ao final da simulação serão gerados os relatórios:
+    - a configuração completa da simulação é feita antes de todo início de simulação. Durante a simulação são capturados as métricas especificadas e ao final da simulação serão gerados os relatórios:
     ```
     # this is the main entry point of this script
     if __name__ == "__main__":
@@ -165,7 +165,11 @@
     print('CSV files generated!')
     ```
     - A reprodutibilidade será feita através de argparse do python, onde os parâmetros serão passados através de argumentos da chamada do script de simulação. Dessa forma...
-    - A carga de trabalho será definida pelo método de SS e SST, através da geração do modelo ....
+  - ## Carga de Trabalho
+    - O Código da solução foi desenvolvido na linguagem de programação Python, que através do TraCI API se integra ao SUMO. Dessa forma, para simular o cenário da solução dentro do SUMO é enviado requisições para se comunicar com o cenário para inserir veículo de emergência, remover veículo acidentado, consultar informação de localização, entre outras recursos. Cada requisição dessa é adiciona um overhead na simulação, a carga de trabalho total é calculada com base na simulação programada mais as interações feitas através da integração com a solução. (precisa melhorar esse paragráfo)
+    - É dessa forma, que obtemos os dados das métricas selecionadas, seja por script de relatório já definido pelo SUMO, como o *tripinfo-output* utilizado, seja por métricas customizadas como o caso do quantitativo de SAVEDS e UNSAVEDS.
+  - ## Execução dos Experimentos
+    - será definida pelo método de SS e SST, através da geração do modelo ....
     - serão executados 10 rodadas de testes com seeds diferentes, que serão utilizados para analise...
     - Foram selecionado 4 fatores e 4 váriaveis de respostas. O que será gerado 16 combinações de fatores a ser testado. Dessa forma serão feito 16 combinações * 10 rodadas de teste = 160 testes serão executados.
     - Os outros parâmetros abordados são destacados pela influência que possuem na simulação. os motivos de valores fixados são os seguintes... (trabalhar no planejamento dos experimentos)
