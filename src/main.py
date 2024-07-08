@@ -78,6 +78,8 @@ def get_options():
                          default="data/trips.trips.xml", help="define the route output file path")
     optParser.add_option("--tripinfo_filepath", type="string",
                          default="tripinfo.xml", help="define the tripinfo file path")
+    optParser.add_option("--edgedata_filepath", type="string",
+                         default="edgedata.xml", help="define the edgedata file path")
     optParser.add_option("--summary_filepath", type="string",
                          default="summary.xml", help="define the summary output file path")
     optParser.add_option("--emissions_filepath", type="string",
@@ -134,6 +136,7 @@ if __name__ == "__main__":
         "--device.bluelight.reactiondist", "1.0",
         # "--emission-output", f'data/{options.emissions_filepath}',
          "--tripinfo-output", f'data/{options.tripinfo_filepath}',
+         "--edgedata-output", f'data/{options.edgedata_filepath}',
         "-S",
         "-Q",
     ])  

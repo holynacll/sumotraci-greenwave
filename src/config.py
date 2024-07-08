@@ -55,7 +55,7 @@ class Config:
         self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 50.0 # seconds to block create accidents 50 or 100
         self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 120.0 # seconds to dispatch emergency vehicle 30 or 120
         self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
-        self.ALGORITHM = 'proposto' # default or proposto
+        self.ALGORITHM = 'default' # default or proposto
 
         self.MAX_ELIGIBLE_ACCIDENTED_ROADS = 4 # Maximum number of accidented roads
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
