@@ -1,87 +1,118 @@
 # Processo Experimental Sistemático
-  - ## Problema:
-    - É preciso que os veículos de emergência tenham um caminho mais livre possível. Veículos de Emergência tem passe livre para passar de sinais vermelhos, porém com o alto volume veículos no trânsito, aliado ao controle dos semáforos temporizados com ciclo fixo, congestionamentos podem ser produzidos no caminho por onde o veículo de emergência irá passar. Nesse momento, os veículos normais se tornam obstáculos que não permitem a passagem do veículo de emergência, prejudicando a duração da viagem. 
-  - ## Pergunta:
-    - De que forma é possível reduzir o tempo de viagem do veículo de emergência?
-    - É possível que modificando o comportamento do controle de sinais do trânsito para que se abram a medida que veículos de emergência se aproximem, aumentando a vazão das próximas faixas, diminuindo a presença de veículos normais que seriam obstáculos, consequentemente reduzindo a duração da viagem do veículo de emergência?
-    - É possível avaliar a influência no trânsito e nos serviços prestados pelos veículos de emergência modificando o controle de sinais de trânsito com o Green Wave?
-    - Sabendo que o trânsito possui n "ene" cenários possíveis, com m "eme" fatores influênciam na qualidade, segurança e saúde do tráfego, é possível formular um método replicável e otimizado para avaliar as possibilidades que um cenário pode explorar?
-    - Na área de saúde temos o termo golden time que marca um prazo limite que o atendimento tem para ter êxito na emergência. Sabendo que esses acidentes podem ocorrer ao mesmo tempo, e pode não ter veículos de emergência suficientes e disponíveis para lidar com todos, é possível formular um método que avalie a priorização com esses diferentes acidentes ocorrendo de forma simultânea?
-  - ## Objetivo
-    - Utilizar SUMO/TraCI para implementação de cenário de acidentes com diferentes deadlines, ocorrendo simultâneamente, em conjunto com despacho de veículos de emergência para atendimento desses acidentes.
-    - Utilizar SUMO/TraCI para implementação de Green Wave dinâmico, que funcione de forma integrada com a inserção de veículos de emergência na simulação.
-    - Reduzir o tempo de duração das viagens dos veículos de emergência.
-    - Realizar Planejamento de Experimentos para avaliar a influência na adoção do Green Wave na presença de veículos de emergência no trânsito em relação ao funcionamento padrão do controle de sinais temporizados com ciclo fixo.
-  - ## Métricas selecionadas:
-    - Duração da viagem (segundos)
-    - Tempo perdido na viagem (segundos) (somátorio do tempo de paradas) - (quando, vehicle_speed == 0, por pelo menos > 0.01 seg, começa a contar e incrementar o tempo perdido)
-    - Quantificação das ocorrências de acidentes salvos e não salvos de acordo com deadline (inteiro)
-  - ## Parâmetros identificados:
-    - Número de veículos
-    - Tempo de bloqueio de novos acidentes
-    - Tempo de atraso no despacho do veículo de emergência
-    - Modelo de seguimento de carro
-    - Algoritmo de controle dos semáforos
-    - Número máximo de vias acidentadas:
-    - Distância do veículo de emergência aos semáforos para acionamento do Green Wave
-    - Tempo de bloqueio inicial de acidentes
-    - Quantidade máxima de acidentes numa mesma via
-    - Tempo de simulação
-    - Comprimento da via
-    - Tempo de transição de sinais do green wave
-    - Velocidade permitida da via
-    - Distância mínima do veículo de emergência ao veículo acidentado para resolução do acidente na via
-    - Gravidade do Acidente
-    - Deadline conforme Gravidade do Acidente (Golden Time)
-    - Velocidade da via acidentada
-  - ## Parâmetros Selecionados (Fatores):
-    - Tempo de bloqueio de novos acidentes
+  - ## Problema: (introdução)
+    - Os veículos de emergência precisam de um caminho livre para chegarem rapidamente ao seu destino. Embora possam passar por sinais vermelhos, o alto volume de tráfego e os semáforos com ciclos fixos podem criar congestionamentos que bloqueiam o caminho. Esses veículos normais se tornam obstáculos, prejudicando a duração da viagem dos veículos de emergência.
+  - ## Pergunta: (introdução)
+    1. Como reduzir o tempo de viagem dos veículos de emergência?
+    2. É possível modificar o comportamento dos semáforos para que abram à medida que os veículos de emergência se aproximem, aumentando a vazão nas próximas faixas e diminuindo a presença de veículos normais que seriam obstáculos?
+    3. Podemos avaliar a influência no trânsito e nos serviços prestados pelos veículos de emergência modificando o controle de sinais de trânsito com o Green Wave?
+    4. Dado que o trânsito possui inúmeros cenários possíveis com vários fatores influenciando a qualidade, segurança e saúde do tráfego, é possível formular um método replicável e otimizado para avaliar essas possibilidades?
+    5. No contexto de emergências médicas, onde o "golden time" marca um prazo limite para atendimento bem-sucedido, é possível formular um método que avalie a priorização de diferentes acidentes ocorrendo simultaneamente?
+  - ## Objetivo (conclusão da introdução)
+    1. Utilizar SUMO/TraCI para simular cenários de acidentes com diferentes deadlines e despachar veículos de emergência para atendê-los.
+    2. Implementar um Green Wave dinâmico que funcione de forma integrada com a inserção de veículos de emergência na simulação.
+    3. Reduzir o tempo de duração das viagens dos veículos de emergência.
+    4. Planejar e executar experimentos para avaliar a influência do Green Wave em comparação com o controle padrão de semáforos.
+  - ## Métricas selecionadas: (EXPERIMENTAL RESULTS)
+    1. Duração da viagem (segundos)
+    2. Tempo perdido na viagem (segundos) - soma do tempo de paradas (vehicle_speed == 0 por mais de 0.01 seg)
+    3. Quantidade de atendimentos bem-sucedido e não sucedidos conforme o deadline (inteiro)
+  - ## Parâmetros identificados: (EXPERIMENTAL RESULTS)
+    1. Número de veículos
+    2. Frequência de acidentes por minuto
+    3. Tempo de atraso no despacho do veículo de emergência
+    4. Modelo de seguimento de carro
+    5. Algoritmo de controle dos semáforos (com green wave com EDF by Deadline e sem green wave)
+    6. Número de vias acidentadas
+    7. Distância do veículo de emergência aos semáforos para acionamento do Green Wave
+    8. Tempo de bloqueio inicial de criação de acidentes
+    9. Quantidade máxima de acidentes numa mesma via
+    10. Tempo de simulação
+    11. Comprimento da via
+    12. Tempo de transição de fases do Green Wave
+    13. Distância mínima do veículo de emergência ao veículo acidentado para resolução do acidente na via
+    14. Gravidade do Acidente
+    15. Golden Time conforme Gravidade do Acidente
+    16. Velocidade permitida da via
+    17. Velocidade da via acidentada
+  - ## Parâmetros Selecionados (Fatores): (EXPERIMENTAL RESULTS)
+    - Frequência de acidentes por minuto
     - Tempo de atraso no despacho de veículo de emergência
     - Modelo de seguimento de carro
-    - Algoritmo de controle dos semáforos
-  - ## Técnica adotada:
-    - Simulação de Trânsito para otimização das viagens dos veículos de emergência utilizando o SUMO (Simulation of Urban MObility) em conjunto com TraCI API integrado com a linguagem de programação Python.
-    - A simulação é reproduzida em um cenario modelo de trânsito de Manhattan, gerado pela ferramenta netgenerate (https://sumo.dlr.de/docs/netgenerate.html), onde um número fixo de veículos trafegam com viagens pseudo-aleatórias na via, por meio do script randomTrips.py (https://sumo.dlr.de/docs/Tools/Trip.html#randomtripspy), disponibilizados pelo conjunto de ferramentas do SUMO.
-    - Utilização de seeds em conjunto com devida organização lógica de código para que eventos aleátorios se tornem determinísticos. Assim, mantemos a reprodutibilidade para avaliar da forma correta a solução proposta.
-    - Abordagem da Proposta da Simulação:
-      - iniciar a simulação;
-        - instanciação das configurações propostas.
-      - Veículos são inseridos com viagens pseudo-aleatórias conforme seed;
-      - Acidentes aleatórios ocorrem de maneira pré-determinada;
-      - Veículos de emergência são despachados para atender aos acidentes, com atraso propósital e priorização de acidentes com menor deadline para simular de forma mais fidedigna a realidade;
-      - Utilização Algoritmo proposto do Green Wave no controle dos sinais de trânsito para auxiliar os veículos de emergência nas viagens, em conjunto com algoritmo de EDF para abrir o sinal para os veículos de emergência que estão em atendimento aos acidentes com menor deadline no momento (ativado somente com o fator Algorithm: Green Wave);
-      - A Simulação se encerra até que todos os veículos programados para serem inseridos tenham completado suas viagens, ou se todos os acidentes programados para acontecer foram resolvidos.
-      - Coleta dos resultados;
-    - Abordagem da Proposta do Green Wave com EDF baseado no deadline do acidente:
-      - Busca todos os veículos de emergência ativos em serviço e ordenados pelo menor deadline e atendimento mais velho;
-      - Para cada veículo de emergência, verifica os próximos sinais de trânsito que vão passar por, e se estiverem à 300 metros de distância:
-        - verifica se o sinal já está sendo alocado por algum outro VE de deadline mais crítico;
-        - se não, insere dados necessários no buffer:
-          - dados do VE,
-          - dados do sinal;
-          - deadline;
-          - dados das vias e faixas controladas pelo sinal;
-          - a via que o VE irá passar pelo sinal;
-          - status do faseamento do algoritmo;
-      - Para cada registro do buffer inserido:
-        - verifica em qual fase o registro está para adotar a estratégia adequada ao momento:
-          - 1º Fase - INITIAL_TRANSITION (inicia a modificação dos sinais do semáforo para implementação do Green Wave);
-          - 2º Fase - IN_PROGRESS (mantém aberto o sinal que o VE irá passar e fechado os demais sinais);
-          - 3º Fase - FINAL_TRANSITION (deixa amarelo o sinal que estava verde e mantém os demais sinais fechados);
-          - 4º Fase - RETURN_TO_PROGRAM_ORIGINAL (registro sai do buffer e deixa o controle de sinal ao modo original como estava);
-        - verifica se registro está em momento de transição;
-          - Atualiza status para fase posterior;
-        - verifica se VE já passou do sinal para finalizar o Green Wave e voltar ao modo original do semáforo;
-          - Atualiza status para FINAL_TRANSITION; (utilizado para agilizar a finalização do green wave quando não precisar mais e ficar prendendo sem razão)
-  - ## Carga de Trabalho
-    - A carga de trabalho é dividida entre:
+    - Algoritmo de controle dos semáforos (com green wave com EDF by Deadline e sem green wave)
+  - ## Técnica adotada: (APPROACH PROPOSED)
+    1. Simulação de Trânsito para Otimização das Viagens dos Veículos de Emergência:
+      - Uso do SUMO (Simulation of Urban MObility) em com a API TraCI integrada ao Python.
+      - Cenario de trânsito baseado no modelo de Manhattan, gerado pela ferramenta netgenerate, com veículos com viagens pseudo-aleatórias por meio do script randomTrips.py.
+      - Utilização de seeds para tornar eventos aleátorios determinísticos, garantindo reprodutibilidade.
+    2. Abordagem da Simulação Proposta:
+      - Iniciar a simulação com as configurações definidas;
+      - Inserir veículos com viagens pseudo-aleatórias conforme seed;
+      - Gerar acidentes pseudo-aleatórios de maneira pré-determinada;
+      - Despachar veículos de emergência para atender aos acidentes, com atraso propósital e priorização de acidentes com menor deadline para simular de forma mais fidedigna a realidade;
+      - Aplicar o algoritmo Green Wave no controle dos semáforos para auxiliar os veículos de emergência, em conjunto com algoritmo  EDF para abrir os sinais para os VEs que estão atendendo aos acidentes mais críticos (ativado somente com o fator Algorithm: Green Wave);
+      - Encerrar a Simulação quando todos os veículos completarem suas viagens ou todos os acidentes forem resolvidos.
+      - Coletar os resultados;
+    3. Abordagem da Proposta do Green Wave com EDF:
+      - Busca todos os veículos de emergência ativos, ordenados pelo menor deadline e atendimento mais velho; *
+      - Para cada veículo de emergência, verifica os próximos sinais de trânsito à 300 metros de distância:
+        - Verificar se o sinal já está sendo alocado por algum outro VE com deadline mais crítico;
+        - Se não, inserir os dados necessários no buffer;
+      - Para cada registro no buffer:
+        - Verificar a fase atual e adotar a estratégia adequada:
+          - INITIAL_TRANSITION:           iniciar a modificação dos sinais.
+          - IN_PROGRESS:                  manter aberto o sinal para a via do VE e fechar para as demais vias.
+          - FINAL_TRANSITION:             tornar amarelo o sinal que o VE estava e manter fechada as demais vias.
+          - RETURN_TO_PROGRAM_ORIGINAL:   retornar o sinal ao modo original.
+        - Atualizar status do registro para a próxima fase, se necessário.
+        - Verificar se o veículo de emergência já passou pelo sinal para finalizar o Green Wave.
+  - ## Carga de Trabalho (APPROACH PROPOSED)
      - Código da solução em Python
-     - Scripts das ferramentas do SUMO na criação da rede viária e na criação dos veículos e respectivas viagens pseudo-aleatórias
-     - Envio de requisições do TraCI API para a simulação adicionando overhead 
+     - Scripts do SUMO para criação da rede viária e dos veículos
+     - Envio de requisições do TraCI API para a simulação 
      - Simulador SUMO.
-        - A carga de trabalho é facilmente modificada utilizando a biblioteca argparse da linguagem Python na modificação dos parâmetros.
-    - Ponto chave na construção desse trabalho foi estudar e projetar a carga de trabalho imposta que melhor representaria as diferenças entre as abordagens com green wave e sem green wave.
-      - Um acidente ocorre a uma dada frequência em relação ao tempo, onde um carro é selecionado em uma via elegível para acidentes, e o veículo é configurado a parar próximo ao meio da via, e a via fica com velocidade permitida de 1.0 m/s
+        - Utilização da biblioteca argparse para modificar parâmetros
+        - Projetar a carga de trabalho que melhor representa as diferenças entre as abordagens com e sem Green Wave
+  - ## Execução dos Experimentos (experimental results)
+    - Planejamento de Projeto Fatorial
+    - k = 4 (número de fatores)
+    - n = 2^k = 2^4 = 16 combinações
+    - Utilização de 10 seeds pré-determinados
+    - Total de testes: nº seeds * nº de combinações = 10 * 16 = 160 testes
+    ### Fatores Primários selecionados e seus respectivos níveis:
+      1. Frequência de Acidentes por Minuto: 0.6 ou 1.2 por minuto
+      2. Tempo de Atraso no Despacho do VE: 30 ou 120 segundos
+      3. Modelo de Seguimento de Carro: Krauss ou EIDM
+      4. Algoritmo de Controle dos Semáforos
+          1. Padrão (temporizado com ciclo fixo, sem Green Wave)
+          2. Padrão com Green Wave (acionado apenas na presença de veículos de emergência)
+    ### Fatores Secundários:
+      - Número de veículos: 4800
+      - Número de vias acidentadas: 4
+      - Distância do veículo de emergência aos semáforos para acionamento do Green Wave: 300 metros
+      - Tempo de bloqueio inicial de criação de acidentes: 300 segundos
+      - Quantidade máxima de acidentes numa mesma via: 1
+      - Tempo de simulação: 1200 segundos
+      - Comprimento da via: 300 metros
+      - Tempo de transição de fases do Green Wave: 8.0 segundos
+      - Distância mínima do veículo de emergência ao veículo acidentado para resolução do acidente na via: 15 metros
+      - Gravidade do Acidente e Golden Time:
+        - Crítico: 850
+        - Alto: 1000
+        - Médio: 1200
+        - Baixo: 1500
+      - Velocidade permitida da via: 13.89 m/s (default SUMO)
+      - Velocidade da via acidentada: 1.0 m/s
+  - ## Analise dos resultados (experimental results)
+  - ## Gráficos (experimental results)
+    - Fatores com interação (retas que se intersectam)
+    - Fatores sem interação  (retas que não se intersectam, paralelas)
+  - ## Conclusão (experimental results)
+    
+
+
+
+### Detalhes da Simulação
+  - Um acidente ocorre a uma dada frequência em relação ao tempo, onde um carro é selecionado em uma via elegível para acidentes, e o veículo é configurado a parar próximo ao meio da via, e a via fica com velocidade permitida de 1.0 m/s
         - Por quê próximo ao meio da via?
           - Paradas próximas as saídas impedem que veículos façam a mudança de faixa para conseguir entrar em outra via
           - Paradas próximas as entradas podem impedir de veículos entrarem na via acidentada.
@@ -93,39 +124,4 @@
         - No cenário que estamos apresentando existem deadlocks e teleports, porém com baixa incidência possibilitando os experimentos.
         - Percebemos maior diferença entre os experimentos diferenciados pelo algoritmo com Green Wave e sem conforme aumentavamos o nível de congestionamento (aumentando número de veículos, reduzindo velocidade da via acidentada, atrasando o despacho do veículo de emergência de resolver o acidente, etc.). Porém, se aumentar demais o congestionamento trava a simulação impossibilitando a avaliação do cenário devida. 
     - Obtemos os dados das métricas selecionadas para avaliação através do script de geração de relatório *tripinfo-output* e *edgedata-output* disponibilizado pelo SUMO, e as métricas customizadas via código da solução em Python.
-  - ## Execução dos Experimentos
-    - Planejamento de Projeto Fatorial
-    - k = 4 (número de fatores)
-    - n = 2^k = 2^4 = 16 combinações
-    - Utilização de 10 seeds pré-determinados
-    - Total de testes: nº seeds * nº de combinações = 10 * 16 = 160 testes
-    Fatores Primários selecionados e seus respectivos níveis:
-      - Tempo de Bloqueio de Novos Acidentes: 50 ou 100 segundos
-      - Tempo de atraso no despacho de veículo de emergência: 30 ou 120 segundos após a ocorrência do acidente
-      - Modelo de seguimento de carro: Krauss ou EIDM
-      - Algoritmo de controle dos semáforos: Padrão (temporizado com ciclo fixo) ou Padrão com Green Wave
-      - Número de veículos: 4800
-    - Fatores Secundários e seus respectíveis valores para esta simulação: 
-      - Número máximo de vias acidentadas: 4
-      - Distância do veículo de emergência aos semáforos presentes no seu caminho para acionamento do green wave: 300 métros
-      - Tempo de bloqueio inicial de acidentes: 300 segundos
-      - Quantidade máxima de acidentes numa mesma via: 1
-      - Tempo de simulação: 1200 segundos
-      - Comprimento da via: 300 métros
-      - Tempo de transição de sinais do green wave: 8.0 segundos
-      - Velocidade da via: 13.89 m/s (sumo default)
-      - Distância mínima do veículo de emergência ao veículo acidentado para resolver o acidente na via: 15.0 métros
-      - Gravidade do Acidente e Golden Time específico:
-        - Crítico: 850
-        - Alto: 1000
-        - Médio: 1200
-        - Baixo: 1500
-      - Velocidade da via acidentada: 1.0 m/s
-  - ## Analise dos resultados
-  - ## Gráficos
-    - Fatores com interação (retas que se intersectam)
-    - Fatores sem interação  (retas que não se intersectam, paralelas)
-  - ## Conclusão
-    
-
-
+    - A carga de trabalho é facilmente modificada utilizando a biblioteca argparse da linguagem Python na modificação dos parâmetros.
