@@ -2,9 +2,6 @@ from enum import Enum
 from collections import namedtuple
 import os
 import sys
-# Dynamically adjust sys.path to include the root directory where setup_environment.py is located
-# sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-# import setup_environment # Carrega o ambiente de configuração
 
 os.environ['SUMO_HOME'] = "/home/acll/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 # os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
@@ -53,8 +50,8 @@ class Config:
         self.VEHICLE_NUMBER: int = 4800 # Number of vehicles in the simulation
         
         self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 50.0 # seconds to block create accidents 50 or 100
-        self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 120.0 # seconds to dispatch emergency vehicle 30 or 120
-        self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
+        self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 30.0 # seconds to dispatch emergency vehicle 30 or 120
+        self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
         self.ALGORITHM = 'default' # default or proposto
 
         self.MAX_ELIGIBLE_ACCIDENTED_ROADS = 4 # Maximum number of accidented roads
@@ -66,6 +63,8 @@ class Config:
         self.MAX_STOP_DURATION = 10 # not working
         self.SPEED_ROAD = 13.89 # The default speed on an edge (in m/s); default: 13.89
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0 # The minimum distance to the accident for the emergency vehicle to arrive
+        self.LATERAL_RESOLUTION = 1.8
+        self.BLUE_LIGHT_REACTION_DIST = 1.0
         self.HOSPITAL_POS_START: str = '' # A1B1
         self.HOSPITAL_POS_END: str = '' # B1A1
         self.ELIGIBLE_ACCIDENTED_ROADS = [] # Roads that can have accidents

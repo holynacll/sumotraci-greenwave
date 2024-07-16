@@ -101,13 +101,16 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
     traci.edge.setMaxSpeed(accidented_road_id, speed_road_accidented)
     # traci.vehicle.setSpeed(veh_accidented_id, 0)
     traci.vehicle.slowDown(veh_accidented_id, 0.2 * traci.vehicle.getAllowedSpeed(veh_accidented_id), 3.0)
-    traci.vehicle.setStop(
-        veh_accidented_id, 
-        edgeID=accidented_road_id,
-        pos=traci.vehicle.getLanePosition(veh_accidented_id)+15.0,
-        laneIndex=traci.vehicle.getLaneIndex(veh_accidented_id),
-        duration=1500
-    )
+    try:
+        traci.vehicle.setStop(
+            veh_accidented_id, 
+            edgeID=accidented_road_id,
+            pos=traci.vehicle.getLanePosition(veh_accidented_id)+15.0,
+            laneIndex=traci.vehicle.getLaneIndex(veh_accidented_id),
+            duration=1500
+        )
+    except:
+        return
     traci.vehicle.highlight(veh_accidented_id, color_highlight)
     settings.buffer_vehicles_accidenteds.append(
         {

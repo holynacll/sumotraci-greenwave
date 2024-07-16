@@ -66,6 +66,43 @@ def emission_xml_to_csv(xml_file, csv_file):
 #             csv_writer.writerow(step_data)
 
 
+def edgedata_xml_to_csv(xml_file, csv_file):
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Prepare to write to CSV
+    with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
+        csv_writer = None
+
+        # Iterate over each timestep and then each vehicle
+        for meandata in root.findall('interval'):
+            for interval in meandata.findall('edge'):
+                interval_data = interval.attrib
+                if 'teleported' not in interval_data:
+                    interval_data['teleported'] = '0'
+                if 'vaporized' not in interval_data:
+                    interval_data['vaporized'] = '0'
+                interval_data['seed'] = settings.SEED
+                interval_data['ALGORITHM'] = settings.ALGORITHM
+                interval_data['DELAY_TO_DISPATCH_EMERGENCY_VEHICLE'] = settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE
+                interval_data['CAR_FOLLOW_MODEL'] = settings.CAR_FOLLOW_MODEL
+                interval_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = (
+                    settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
+                )
+                interval_data['SAVEDS'] = settings.count_saveds
+                interval_data['UNSAVEDS'] = settings.count_accidents - settings.count_saveds
+
+                # If the CSV writer hasn't been set up yet, do it with the headers
+                if csv_writer is None:
+                    headers = list(interval_data.keys())
+                    csv_writer = csv.DictWriter(file, fieldnames=headers)
+                    csv_writer.writeheader()
+
+                # Write the vehicle data as a row in the CSV
+                csv_writer.writerow(interval_data)
+
+
 def tripinfo_xml_to_csv(xml_file, csv_file):
     # Parse the XML file
     tree = ET.parse(xml_file)
@@ -79,6 +116,22 @@ def tripinfo_xml_to_csv(xml_file, csv_file):
         for tripinfo in root.findall('tripinfo'):
             # Combine the time attribute with vehicle attributes
             tripinfo_data = tripinfo.attrib
+            tripinfo_data['CO_abs'] = ''
+            tripinfo_data['CO2_abs'] = ''
+            tripinfo_data['HC_abs'] = ''
+            tripinfo_data['PMx_abs'] = ''
+            tripinfo_data['NOx_abs'] = ''
+            tripinfo_data['fuel_abs'] = ''
+            if tripinfo_data['vType'] == 'emergency_emergency':
+                for tripinfo_emission in tripinfo.findall('emissions'):
+                    tripinfo_emission_data = tripinfo_emission.attrib
+                    tripinfo_data['CO_abs'] = tripinfo_emission_data['CO_abs']
+                    tripinfo_data['CO2_abs'] = tripinfo_emission_data['CO2_abs']
+                    tripinfo_data['HC_abs'] = tripinfo_emission_data['HC_abs']
+                    tripinfo_data['PMx_abs'] = tripinfo_emission_data['PMx_abs']
+                    tripinfo_data['NOx_abs'] = tripinfo_emission_data['NOx_abs']
+                    tripinfo_data['fuel_abs'] = tripinfo_emission_data['fuel_abs']
+
             tripinfo_data['seed'] = settings.SEED
             tripinfo_data['ALGORITHM'] = settings.ALGORITHM
             tripinfo_data['DELAY_TO_DISPATCH_EMERGENCY_VEHICLE'] = settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE
@@ -88,6 +141,7 @@ def tripinfo_xml_to_csv(xml_file, csv_file):
             )
             tripinfo_data['SAVEDS'] = settings.count_saveds
             tripinfo_data['UNSAVEDS'] = settings.count_accidents - settings.count_saveds
+
 
             # If the CSV writer hasn't been set up yet, do it with the headers
             if csv_writer is None:

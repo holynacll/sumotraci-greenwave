@@ -13,7 +13,7 @@ from emergency_monitor import monitor_emergency_vehicles
 from optimization_green_wave import improve_traffic_for_emergency_vehicle
 from optimization_reroute import improve_traffic_on_accidented_road
 from utils import generate_routefile, update_sumo_config
-from xml_to_csv import tripinfo_xml_to_csv
+from xml_to_csv import tripinfo_xml_to_csv, edgedata_xml_to_csv
 
 
 def shouldContinueSim():
@@ -132,8 +132,8 @@ if __name__ == "__main__":
     traci.start([
         sumoBinary,
         "-c", options.sumocfg_filepath,
-        "--lateral-resolution", "1.8",
-        "--device.bluelight.reactiondist", "1.0",
+        "--lateral-resolution", str(settings.LATERAL_RESOLUTION),
+        "--device.bluelight.reactiondist", str(settings.BLUE_LIGHT_REACTION_DIST),
         # "--emission-output", f'data/{options.emissions_filepath}',
          "--tripinfo-output", f'data/{options.tripinfo_filepath}',
          "--edgedata-output", f'data/{options.edgedata_filepath}',
@@ -153,5 +153,9 @@ if __name__ == "__main__":
     tripinfo_xml_to_csv(
         f'data/{options.tripinfo_filepath}',
         f'data/{options.tripinfo_filepath[:-4]}.csv',
+    )
+    edgedata_xml_to_csv(
+        f'data/{options.edgedata_filepath}',
+        f'data/{options.edgedata_filepath[:-4]}.csv',
     )
     print('CSV files generated!')

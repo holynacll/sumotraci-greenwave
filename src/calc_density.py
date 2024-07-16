@@ -23,7 +23,7 @@ def calculate_average_density(xml_file):
 
 if __name__ == "__main__":
     xml_files = [
-        'data/edgedata.bkp.xml',
+        'data/edgedata_com_gw.xml',
         'data/edgedata.xml'
     ]
 

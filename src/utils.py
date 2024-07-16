@@ -45,10 +45,13 @@ def add_emergency_vehicle_type_to_route_file(root):
     <vType
     id="emergency_emergency"
     vClass="emergency"
+    emissionClass="HBEFA3/PC_G_EU4"
     color="red"
     minGap="0.5"
     >
         <param key="has.bluelight.device" value="true"/>
+        <param key="has.emissions.device" value="true"/>
+        <param key="device.emissions.deterministic"/>
     </vType>
     """)
 
