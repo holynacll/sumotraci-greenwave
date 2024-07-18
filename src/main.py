@@ -12,7 +12,7 @@ from emergency_call import call_emergency_vehicle
 from emergency_monitor import monitor_emergency_vehicles
 from optimization_green_wave import improve_traffic_for_emergency_vehicle
 from optimization_reroute import improve_traffic_on_accidented_road
-from utils import generate_routefile, update_sumo_config
+from utils import generate_roadfile, generate_routefile, update_sumo_config
 from xml_to_csv import tripinfo_xml_to_csv, edgedata_xml_to_csv
 
 
@@ -72,6 +72,8 @@ def get_options():
                          default=settings.SEED, help="define the seed for random number generator")
     optParser.add_option("--sumocfg_filepath", type="string",
                          default="data/config.sumocfg", help="define the sumoconfig file path")
+    optParser.add_option("--road_filepath", type="string",
+                         default="road.net.xml", help="define the road network output file path")
     optParser.add_option("--route_filepath", type="string",
                          default="route.rou.xml", help="define the route output file path")
     optParser.add_option("--trips_filepath", type="string",
@@ -115,10 +117,13 @@ if __name__ == "__main__":
     settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = float(options.delay_dispatch_emergency_vehicle)
     settings.CAR_FOLLOW_MODEL = options.car_follow_model
     settings.ALGORITHM = options.algorithm
+    
+    road_filepath = generate_roadfile(road_filepath=options.road_filepath)
 
     generate_routefile(
         route_filepath=options.route_filepath,
         trips_filepath=options.trips_filepath,
+        road_filepath=road_filepath,
         seed=settings.SEED,
     )
     update_sumo_config(

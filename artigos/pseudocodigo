@@ -1,0 +1,21 @@
+1. Para cada veículo de emergência (VE) ativo:
+2.     Ordenar os VEs pelo menor deadline e atendimento mais antigo.
+3.     Para cada VE:
+4.         Identificar os próximos semáforos a 300 metros de distância.
+5.         Verificar se o semáforo está alocado por outro VE com deadline mais crítico:
+6.             Se NÃO:
+7.                 Inserir os dados do VE no buffer.
+8. Para cada registro no buffer:
+9.     Verificar a fase atual do semáforo:
+10.        SE Fase = TRANSIÇÃO INICIAL:
+11.            Iniciar a modificação dos sinais.
+12.        SE Fase = EM PROGRESSO:
+13.            Manter aberto o sinal para a via do VE e fechar as demais vias.
+14.        SE Fase = TRANSIÇÃO FINAL:
+15.            Tornar amarelo o sinal do VE e manter fechadas as demais vias.
+16.        SE Fase = RETORNO AO PROGRAMA ORIGINAL:
+17.            Retornar o semáforo ao programa original.
+18. Atualizar o semáforo para a próxima fase, se necessário.
+19. Verificar se o VE já passou pelo semáforo:
+20.     Se SIM:
+21.         Desalocar o Green Wave do semáforo.

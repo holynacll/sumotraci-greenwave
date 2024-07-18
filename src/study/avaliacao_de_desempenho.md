@@ -8,10 +8,11 @@
     4. Dado que o trânsito possui inúmeros cenários possíveis com vários fatores influenciando a qualidade, segurança e saúde do tráfego, é possível formular um método replicável e otimizado para avaliar essas possibilidades?
     5. No contexto de emergências médicas, onde o "golden time" marca um prazo limite para atendimento bem-sucedido, é possível formular um método que avalie a priorização de diferentes acidentes ocorrendo simultaneamente?
   - ## Objetivo (conclusão da introdução)
-    1. Utilizar SUMO/TraCI para simular cenários de acidentes com diferentes deadlines e despachar veículos de emergência para atendê-los.
-    2. Implementar um Green Wave dinâmico que funcione de forma integrada com a inserção de veículos de emergência na simulação.
-    3. Reduzir o tempo de duração das viagens dos veículos de emergência.
-    4. Planejar e executar experimentos para avaliar a influência do Green Wave em comparação com o controle padrão de semáforos.
+    1. Reduzir o tempo de duração das viagens dos veículos de emergência.
+    2. Elaborar cenário de atendimento de veículos de emergência à acidentes de trânsito com deadline diverso;
+    3. Elaborar algoritmo Green Wave integrado ao escalonamento dinâmico de veículos de emergência baseado na gravidade do acidente.
+    0. Planejar e executar experimentos para avaliar a influência do Green Wave em comparação com o controle padrão de semáforos. (metodologia)
+    0. Utilizar SUMO/TraCI para simular cenários de acidentes com diferentes deadlines e despachar veículos de emergência para atendê-los. (meotodologia)
   - ## Métricas selecionadas: (EXPERIMENTAL RESULTS)
     1. Duração da viagem (segundos)
     2. Tempo perdido na viagem (segundos) - soma do tempo de paradas (vehicle_speed == 0 por mais de 0.01 seg)
@@ -40,7 +41,11 @@
     - Modelo de seguimento de carro
     - Algoritmo de controle dos semáforos (com green wave com EDF by Deadline e sem green wave)
   - ## Técnica adotada: (APPROACH PROPOSED)
-    1. Simulação de Trânsito para Otimização das Viagens dos Veículos de Emergência:
+    1. Cenário:
+      - Uso do simulador de trânsito SUMO (Simulation of Urban MObility) com a API TraCI integrada ao Python;
+      - Cenário de trânsito baseado no modelo de Manhattan, com 5 vias horizontais e verticais que se cruzam formando uma Grid, e cada via com 3 faixas;
+      - Cada cruzamento possui um semáforo que controla as vias que o intersecta;
+      - Veículos trafegam com viagens pseudoaleatórias.
       - Uso do SUMO (Simulation of Urban MObility) em com a API TraCI integrada ao Python.
       - Cenario de trânsito baseado no modelo de Manhattan, gerado pela ferramenta netgenerate, com veículos com viagens pseudo-aleatórias por meio do script randomTrips.py.
       - Utilização de seeds para tornar eventos aleátorios determinísticos, garantindo reprodutibilidade.

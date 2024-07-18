@@ -1,0 +1,33 @@
+Algorithm 1: Green Wave com EDF
+Input: lista_veiculos_emergencia, lista_semaforos
+Output: Semáforos atualizados para priorização de veículos de emergência
+
+01. Ordenar lista_veiculos_emergencia por menor deadline e atendimento mais antigo
+02. for cada veiculo in lista_veiculos_emergencia do
+03.     identificar proximos_semaforos(veiculo, 300)
+04.     for cada semaforo in proximos_semaforos do
+05.         if semaforo_alocado(semaforo, lista_veiculos_emergencia) == False then
+06.             buffer_adicionar(veiculo, semaforo)
+07.         end if
+08.     end for
+09. end for
+10. for cada registro in buffer do
+11.     fase_atual = obter_fase(semaforo)
+12.     if fase_atual == "TRANSIÇÃO INICIAL" then
+13.         iniciar_modificacao_sinais(semaforo)
+14.     else if fase_atual == "EM PROGRESSO" then
+15.         manter_aberto_para_ve(semaforo)
+16.         fechar_demais_vias(semaforo)
+17.     else if fase_atual == "TRANSIÇÃO FINAL" then
+18.         sinal_amarelo(semaforo)
+19.         manter_fechado_outros(semaforo)
+20.     else if fase_atual == "RETORNO AO PROGRAMA ORIGINAL" then
+21.         retornar_programa_original(semaforo)
+22.     end if
+23. end for
+24. for cada registro in buffer do
+25.     atualizar_proxima_fase(semaforo)
+26.     if ve_passou(semaforo) == True then
+27.         desalocar_green_wave(semaforo)
+28.     end if
+29. end for

@@ -1,21 +1,23 @@
 import os
-import subprocess
 import xml.etree.ElementTree as ET
 from config import settings
 
 
-# def generate_roadfile(road_filepath: str):
-#     # road_filepath = "data/road.net.xml"
-#     cmd = (
-#         f"python {os.environ['SUMO_HOME']}/tools/osmWebWizard.py -l {settings.LANE_LENGTH} -n {road_filepath}"
-#     )
-#     cmd_list = cmd.split(" ")
-#     os.system(cmd)
-#     # subprocess.run(cmd_list, check=True
+def generate_roadfile(road_filepath: str):
+    road_filepath = f"data/{road_filepath}"
+    cmd = (
+        f"netgenerate --grid --grid.number={settings.GRID_NUMBER} --grid.length={settings.LANE_LENGTH} "
+        f"--default.lanenumber {str(settings.LANE_NUMBER)} --default-junction-type traffic_light "
+        f"--output-file={road_filepath} --no-turnarounds true --junctions.join-turns true"
+    )
+    os.system(cmd)
+    print(f"Generate road network file on {road_filepath}")
+    return road_filepath
 
 
-def generate_routefile(route_filepath: str, trips_filepath: str, seed: int):
-    road_filepath = "data/road.net.xml"
+
+def generate_routefile(route_filepath: str, trips_filepath: str, road_filepath: str, seed: int):
+    # road_filepath = "data/road.net.xml"
     route_filepath = f"data/{route_filepath}"
     trip_attributes_1 = 'type="passenger_idm"'
     cmd = (
@@ -37,6 +39,7 @@ def generate_routefile(route_filepath: str, trips_filepath: str, seed: int):
 
     # Write the updated XML route file
     tree.write(route_filepath, encoding="UTF-8", xml_declaration=True)
+    print(f"Generate route file on {route_filepath}")
 
 
 def add_emergency_vehicle_type_to_route_file(root):
