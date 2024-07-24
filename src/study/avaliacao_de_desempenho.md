@@ -41,11 +41,20 @@
     - Modelo de seguimento de carro
     - Algoritmo de controle dos semáforos (com green wave com EDF by Deadline e sem green wave)
   - ## Técnica adotada: (APPROACH PROPOSED)
+    0. Congestionamento
+      - O congestionamento é um sintoma crônico presente nos grandes fluxos de tráfegos urbanos no mundo, que traz uma serie de impactos negativos que pertubam a eficiência e saúde ao meio que o tangencia. Dentre os impactos causados, a piora de serviços de atendimento que precisam passar pelos congestionamentos, a exemplo dos acidentes a serem socorridos, além de aumentar o indice de causa do mesmo, onde é preciso que véiculos de emergência, e quem os pilota, tenham que lidar com uma viagem de maior risco, se não tivesse congestionamento, até o local de socorro sendo solicitado. [5], [11], [12]
+
+    0. Metodologia
+      - Foi necessário construir um cenário de trânsito que embarcasse um grande fluxo de tráfego e apresentasse congestionamentos, de modo a ser percebido o desempenho do controle de semáforos por ciclo fixo temporizado cair. Cenários que não tem presença de congestionamentos não mostram um desempenho grande ineficiência nas viagens dos veículos de emergência, desde os que mesmos possuem direitos especiais no trânsito, no momento de atuação do serviço. 
+      O dispositivo BlueLight.Device, objeto do SUMO, pode ser incorporado em um veículo de emergência para obter os privilégios especiais de trânsito a qualquer tempo. Alguns do privilégios adotados são:
+        - 
+    0. Ambulance Profile:
+      - Para poder simular o perfil de condução das ambulâncias, deve ser garantido que elas possam ultrapassar o tráfego de forma realista, formando faixas de emergência. Na simulação com utilização do modelo de subfaixa, outros veículos formam vias de emergência, mas a ambulância não os utilizou inicialmente. Isso não só significava que as ambulâncias não tinham vantagem de tempo sobre os usuários normais da estrada, mas também 0,00,51,01,52,02,50600120018002400peso de tempo na contagem média do dia em hhmm60
     1. Cenário:
       - Uso do simulador de trânsito SUMO (Simulation of Urban MObility) com a API TraCI integrada ao Python;
       - Cenário de trânsito baseado no modelo de Manhattan, com 5 vias horizontais e verticais que se cruzam formando uma Grid, e cada via com 3 faixas;
       - Cada cruzamento possui um semáforo que controla as vias que o intersecta;
-      - Veículos trafegam com viagens pseudoaleatórias.
+      - Veículos trafegam com viagens aleatórias.
       - Uso do SUMO (Simulation of Urban MObility) em com a API TraCI integrada ao Python.
       - Cenario de trânsito baseado no modelo de Manhattan, gerado pela ferramenta netgenerate, com veículos com viagens pseudo-aleatórias por meio do script randomTrips.py.
       - Utilização de seeds para tornar eventos aleátorios determinísticos, garantindo reprodutibilidade.
@@ -117,16 +126,43 @@
 
 
 ### Detalhes da Simulação
-  - Um acidente ocorre a uma dada frequência em relação ao tempo, onde um carro é selecionado em uma via elegível para acidentes, e o veículo é configurado a parar próximo ao meio da via, e a via fica com velocidade permitida de 1.0 m/s
-        - Por quê próximo ao meio da via?
-          - Paradas próximas as saídas impedem que veículos façam a mudança de faixa para conseguir entrar em outra via
-          - Paradas próximas as entradas podem impedir de veículos entrarem na via acidentada.
-          - Esses dois casos entram nas melhorias futuras que a solução pode embarcar para avaliar a otimização de forma completa, exaurindo todos os casos possíveis.
+
+## Geração de Acidentes
+  - Acidentes ocorrem de forma períodica durante a simulação, onde um veículo não-emergência e não-acidentado é selecionado em uma via elegível para acidentes, o veículo é configurado a parar próximo ao meio da via e a via fica com velocidade permitida de 1.0 m/s
+      - Por quê próximo ao meio da via?
+        - Paradas próximas as saídas impedem que veículos façam a mudança de faixa para conseguir entrar em outra via
+        - Paradas próximas as entradas podem impedir de veículos entrarem na via acidentada.
+        - Esses dois casos entram nas melhorias futuras que a solução pode embarcar para avaliar a otimização de forma completa, exaurindo todos os casos possíveis.
+      - Quando uma via é elegível para acidentes:
+        - foi definido na simulação proposta a quantidade de 4 vias elegíveis por simulação.
+        - também é verificado se na via existe algum acidente em curso, pois só pode existe um acidente por via
+        - a escolha das vias é aleatória.
       - O tráfego nas vias acidentadas apresentam velocidade relativa abaixo de 0.1, o que configura o nível de serviço para F, referenciado pelo LOS (Level of Service by Transportation)
-      - O prolongamento na falta de resolução do acidente e incremento de veículos nesse fluxo, gera um espalhamento dos congestionamentos para as outras vias conectadas.
-      - Quanto mais conectada as outras vias estão da via acidentada, maiores os níveis de congestionamentos, podendo também estarem relacionados ao nível de serviço F pelo LOS.
-      - De forma que se o congestionamento se espalhar demais, aumenta a incidência de deadlocks no cenário impossibilitando a avaliação de forma efetiva.
-        - No cenário que estamos apresentando existem deadlocks e teleports, porém com baixa incidência possibilitando os experimentos.
-        - Percebemos maior diferença entre os experimentos diferenciados pelo algoritmo com Green Wave e sem conforme aumentavamos o nível de congestionamento (aumentando número de veículos, reduzindo velocidade da via acidentada, atrasando o despacho do veículo de emergência de resolver o acidente, etc.). Porém, se aumentar demais o congestionamento trava a simulação impossibilitando a avaliação do cenário devida. 
+      - Enquanto o acidente não é resolvido, a vazão de veículos continua prejudicada em conjunto com veículos que continuam chegando neste fluxo, há um espalhamento do congestionamento para as vias próximas. E um congestionamento muito grande pode gerar deadlocks complexos, assim inviabilizando a avaliação do cenário.
+      - Quando acontece um deadlock, a resolução é o teleport de veículos, configurado pelo parâmetro time-to-teleport que está definido com 300 segundos, padrão do SUMO.
+      - O evento chave na diferenciação entre os dois modelos foi com a presença de congestionamentos nos cenários. Foi necessário identificar os fatores fortemente relacionados ao aumento de congestionamentos, como volume de veículos na simulação, redução de velocidade da via acidentada, maior quantidade de acidentes na simulação, modelo de seguimento de carro ou o atraso do despacho do veículo de emergência. Assim, foi regulado seus níveis de modo que pudessemos ter cenários o mais congestionado possíveis e que não apresentasse deadlocks ou que fosse o mínimo possível, para não inviabilizar a simulação.
+      - No cenário que estamos apresentando existem deadlocks, porém com baixa incidência que possibilitaram os experimentos.
+  
+  ## Atendimento do VE
+  - Um controlador na solução verifica de forma períodica se existe novos acidentes na simulação para associar o atendimento mais crítico a um veículo de emergência. A viagem do VE iniciará de acordo com o nível de atraso do despacho regulado.
+    - O VE será despachado de um HOSPITAL_START, que seguirá até o local do acidente e finalizará a viagem se deslocando para HOSPITAL_END.
+      - HOSPITAL_START e HOSPITAL_END são duas vias que são definidas de forma aleatória no início da simulação.
+      - Os critérios de seleção das vias são:
+        - Vias não-internas de cruzamentos
+        - Não são vias elegíveis a acidentes.
+    - Durante o percurso do atendimento, o VE é monitorado em tempo real com a infraestrutura (V2I) para verificar:
+      - Se GWA ativo, para abrir os semáforos do caminho.
+      - Se já chegou ao local de acidente para remoção do veículo acidentado e resolução da velocidade da via
+      - Se já chegou ao hospital de destino para verificar se o prazo estipulado foi atendido.
+   
+  ## Comportamento dos veículos normais durante o acidente
+  - Há um monitoramento dos veículos normais que estão na mesma faixa e atrás do veículo acidentado para realizarem uma mudança de faixa temporária apenas para ultrapassar o veículo acidentado, e retornar para a faixa original, assim não travando o tráfego.
+  - Veículos a frente do VE formam uma faixa virtual liberando a passagem. Essa faixa virtual é definida pelos parâmetros lateral-resolution e device.bluelight.reactiondist com valores respectivos de 1.8 e 1.0. Foi percebido que faixas virtual extensa tendia prejudicar a avaliação do cenário, pois veículos que estavam já ponta extrema para seguir para outra via eram obrigatóriamente deslocados para uma faixa que não permitia a conversão para a via requisitada. Assim, o veículo ficava em modo de deadlock e travando todos os veículos anterior a ele que não poderiam fazer a passagem para a via requerida.
+   
+   
+   
+   
+   
+   
     - Obtemos os dados das métricas selecionadas para avaliação através do script de geração de relatório *tripinfo-output* e *edgedata-output* disponibilizado pelo SUMO, e as métricas customizadas via código da solução em Python.
     - A carga de trabalho é facilmente modificada utilizando a biblioteca argparse da linguagem Python na modificação dos parâmetros.

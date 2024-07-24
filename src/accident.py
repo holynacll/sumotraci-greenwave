@@ -65,7 +65,7 @@ def create_accident():
 
 def vehicle_is_in_a_valid_position_lane(veh_accidented_id):
     position = traci.vehicle.getLanePosition(veh_accidented_id)
-    return position > 0.1 * settings.LANE_LENGTH and position < 0.3 * settings.LANE_LENGTH
+    return position > 0.2 * settings.LANE_LENGTH and position < 0.4 * settings.LANE_LENGTH
 
 
 def accidented_road_is_already_accidented(accidented_road_id):
@@ -100,14 +100,14 @@ def add_vehicle_to_accident(veh_accidented_id, accidented_road_id):
     deadline = settings.severity_gonden_time[severity] + traci.simulation.getTime()
     traci.edge.setMaxSpeed(accidented_road_id, speed_road_accidented)
     # traci.vehicle.setSpeed(veh_accidented_id, 0)
-    traci.vehicle.slowDown(veh_accidented_id, 0.2 * traci.vehicle.getAllowedSpeed(veh_accidented_id), 3.0)
+    traci.vehicle.slowDown(veh_accidented_id, 0.2 * traci.vehicle.getAllowedSpeed(veh_accidented_id), 10.0)
     try:
         traci.vehicle.setStop(
             veh_accidented_id, 
             edgeID=accidented_road_id,
-            pos=traci.vehicle.getLanePosition(veh_accidented_id)+15.0,
+            pos=traci.vehicle.getLanePosition(veh_accidented_id) + (0.1 * settings.LANE_LENGTH),
             laneIndex=traci.vehicle.getLaneIndex(veh_accidented_id),
-            duration=1500
+            duration=settings.ACCIDENT_DURATION
         )
     except:
         return

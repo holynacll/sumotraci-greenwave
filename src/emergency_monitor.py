@@ -15,18 +15,27 @@ def monitor_emergency_vehicles():
 
 
 def monitor_change_lane_accidented_vehicle():
+    # Itera sobre os veículos acidentados registrados no buffer
     for _, accidented_vehicle in enumerate(settings.buffer_vehicles_accidenteds):
         veh_accidented_id = accidented_vehicle['veh_accidented_id']
         lane_accidented_id = accidented_vehicle['lane_accidented_id']
+        # Tenta obter o veículo seguidor a uma distância de 10 metros
         try:
             vehicle_follower_obj = traci.vehicle.getFollower(veh_accidented_id, 10.0)
+            # default response from getFollower is ('', -1.0)
         except traci.TraCIException:
+            """
+            Se retornar TraCIException é provável que o veículo acidentado saiu da simulação e ainda tá no buffer, 
+            então remove o veículo acidentado do buffer e continua para o próximo
+            """
             remove_vehicle_from_accident(veh_accidented_id)
             continue
         vehicle_follower_id = vehicle_follower_obj[0]
         vehicle_follower_distance = vehicle_follower_obj[1]
-        if vehicle_follower_distance > -0.01 and vehicle_follower_distance <= 10.0:
+        # Se o veículo seguidor estiver a uma distância de -0.01 à 10 métros
+        if -0.01 < vehicle_follower_distance <= 10.0:
             actual_lane = traci.vehicle.getLaneID(vehicle_follower_id)
+            # Se o seguidor estiver na mesma faixa do veículo acidentado
             if lane_accidented_id == actual_lane:
                 lane_index = int(lane_accidented_id.split('_')[1])
                 lanes_count = traci.edge.getLaneNumber(traci.vehicle.getRoadID(vehicle_follower_id))

@@ -47,26 +47,28 @@ class Config:
 
         # self.SEED: int = 2174981255
         self.SEED: int = 217492
-        self.VEHICLE_NUMBER: int = 1200 # Number of vehicles in the simulation
+        self.VEHICLE_NUMBER: int = 4800 # Number of vehicles in the simulation
         
         self.TIME_TO_BLOCK_CREATE_ACCIDENTS = 50.0 # seconds to block create accidents 50 or 100
-        self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 30.0 # seconds to dispatch emergency vehicle 30 or 120
-        self.CAR_FOLLOW_MODEL: str = 'Krauss' # Krauss or IDM or EIDM
-        self.ALGORITHM = 'default' # default or proposto
+        self.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE = 120.0 # seconds to dispatch emergency vehicle 30 or 120
+        self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
+        self.ALGORITHM = 'proposto' # default or proposto
 
         self.MAX_ELIGIBLE_ACCIDENTED_ROADS = 4 # Maximum number of accidented roads
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
         self.TIME_FOR_NEXT_ACCIDENT = 300.0 # seconds to create next accident
         self.SIMULATION_END_TIME = 1200.0 # seconds 3600.0
-        self.LANE_LENGTH = 125.0 # The length of the lane in meters
+        self.LANE_LENGTH = 300.0 # The length of the lane in meters
         self.LANE_NUMBER = 3 # The number of lanes on the road
         self.GRID_NUMBER = 5 # The size of grid on road network
         self.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT = 8.0 # GreenWave Transition time on seconds
         self.MAX_STOP_DURATION = 10 # not working
+        self.ACCIDENT_DURATION = 1500 # seconds
         self.SPEED_ROAD = 13.89 # The default speed on an edge (in m/s); default: 13.89
         self.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT = 15.0 # The minimum distance to the accident for the emergency vehicle to arrive
         self.LATERAL_RESOLUTION = 1.8
-        self.BLUE_LIGHT_REACTION_DIST = 1.0
+        self.BLUE_LIGHT_REACTION_DIST = 25.0
+        self.MIN_GAP_EV = 3.0
         self.HOSPITAL_POS_START: str = '' # A1B1
         self.HOSPITAL_POS_END: str = '' # B1A1
         self.ELIGIBLE_ACCIDENTED_ROADS = [] # Roads that can have accidents
@@ -85,10 +87,10 @@ class Config:
         self.severity_order = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
 
         self.severity_gonden_time = {
-            self.SeverityEnum.CRITICAL: 850,
-            self.SeverityEnum.HIGH: 1000,
-            self.SeverityEnum.MEDIUM: 1200,
-            self.SeverityEnum.LOW: 1500,
+            self.SeverityEnum.CRITICAL: 700,
+            self.SeverityEnum.HIGH: 850,
+            self.SeverityEnum.MEDIUM: 1000,
+            self.SeverityEnum.LOW: 1300,
         }
         self.severity_colors = {
             self.SeverityEnum.CRITICAL: (255, 0, 0, 255),

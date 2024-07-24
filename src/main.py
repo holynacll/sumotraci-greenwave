@@ -139,9 +139,7 @@ if __name__ == "__main__":
         "-c", options.sumocfg_filepath,
         "--lateral-resolution", str(settings.LATERAL_RESOLUTION),
         "--device.bluelight.reactiondist", str(settings.BLUE_LIGHT_REACTION_DIST),
-        # "--emission-output", f'data/{options.emissions_filepath}',
-         "--tripinfo-output", f'data/{options.tripinfo_filepath}',
-         "--edgedata-output", f'data/{options.edgedata_filepath}',
+        "--tripinfo-output", f'data/{options.tripinfo_filepath}',
         "-S",
         "-Q",
     ])  
