@@ -9,13 +9,8 @@ Cenário:
    - [x] deadline de vidas - classificação (ex: baixo, médio, grave, gravíssimo, ...)
    - [x] EDF com prioridade
    - [X] green wave com escalonamento
-    - [ ] produce traffic light logic complete for green wave, example: "saindo do sul e indo pro oeste, fechando note e leste (semaforos)".
+    - [x] traffic light logic complete for green wave
    - [x] reroute de veículos para evitar via com acidente
-
-  TODO: para apresentação
-   - [x] - Terminar o green wave
-   - [X] - fix accident
-   - [ ] - para implementar not internal links
 
   TODO
    - [ ] article: Analysis and modelling of road traffic using SUMO tooptimize the arrival time of emergency vehicles

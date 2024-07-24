@@ -1,0 +1,11 @@
+### Future works
+ - Improvements on Simulation
+ - Improvements on GWA
+ - More Complex Scenaries with topology, public transport, pedestrian, ...
+ - Compare with other traffic lights
+ - Data Science
+ - Data Lake 
+ - Using Real Network Data
+ - Calibrating Urban Environment Using GPS-Data / SAMU 
+ - Sumo/TraCI integrado a testes automatizados
+ - VACs with Simpla
