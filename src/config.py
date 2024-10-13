@@ -46,6 +46,18 @@ class Config:
         self.counter_assign_random_severity = 0
 
         # self.SEED: int = 2174981255
+        self.seeds: list[int] = [
+            428956419,
+            1954324947,
+            1145661099,
+            1835732737,
+            794161987,
+            1329531353,
+            200496737,
+            633816299,
+            1410143363,
+            1282538739,
+        ]
         self.SEED: int = 217492
         self.VEHICLE_NUMBER: int = 4800 # Number of vehicles in the simulation
         

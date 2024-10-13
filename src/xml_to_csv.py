@@ -153,3 +153,44 @@ def tripinfo_xml_to_csv(xml_file, csv_file):
             csv_writer.writerow(tripinfo_data)
 # Example usage
 # summary_xml_to_csv('data/summary_0.xml', 'data/summary_0.csv')
+
+def lanedata_xml_to_csv(xml_file, csv_file):
+    # Parse the XML file
+    tree = ET.parse(xml_file)
+    root = tree.getroot()
+
+    # Prepare to write to CSV
+    with open(csv_file, mode='w', newline='', encoding='utf-8') as file:
+        csv_writer = None
+
+        # Iterate over each timestep and then each vehicle
+        for interval in root.findall('interval'):
+            for edge in interval.findall('edge'):
+                for lane in edge.findall('lane'):
+                    interval_data = interval.attrib
+                    # Combine the time attribute with vehicle attributes
+                    lane_data = lane.attrib
+                    if 'teleported' not in lane_data:
+                        lane_data['teleported'] = '0'
+                    if 'vaporized' not in lane_data:
+                        lane_data['vaporized'] = '0'
+                    lane_data['end'] = interval_data['end']
+                    lane_data['seed'] = settings.SEED
+                    lane_data['ALGORITHM'] = settings.ALGORITHM
+                    lane_data['DELAY_TO_DISPATCH_EMERGENCY_VEHICLE'] = settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE
+                    lane_data['CAR_FOLLOW_MODEL'] = settings.CAR_FOLLOW_MODEL
+                    lane_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = (
+                        settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
+                    )
+                    lane_data['SAVEDS'] = settings.count_saveds
+                    lane_data['UNSAVEDS'] = settings.count_accidents - settings.count_saveds
+
+                    # If the CSV writer hasn't been set up yet, do it with the headers
+                    if csv_writer is None:
+                        headers = list(lane_data.keys())
+                        csv_writer = csv.DictWriter(file, fieldnames=headers)
+                        csv_writer.writeheader()
+
+                    # Write the vehicle data as a row in the CSV
+                    csv_writer.writerow(lane_data)
+

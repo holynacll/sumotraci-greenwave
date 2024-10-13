@@ -13,7 +13,7 @@ from emergency_monitor import monitor_emergency_vehicles
 from optimization_green_wave import improve_traffic_for_emergency_vehicle
 from optimization_reroute import improve_traffic_on_accidented_road
 from utils import generate_roadfile, generate_routefile, update_sumo_config
-from xml_to_csv import tripinfo_xml_to_csv, edgedata_xml_to_csv
+from xml_to_csv import tripinfo_xml_to_csv, lanedata_xml_to_csv
 
 
 def shouldContinueSim():
@@ -82,6 +82,8 @@ def get_options():
                          default="tripinfo.xml", help="define the tripinfo file path")
     optParser.add_option("--edgedata_filepath", type="string",
                          default="edgedata.xml", help="define the edgedata file path")
+    optParser.add_option("--lanedata_filepath", type="string",
+                         default="lanedata.xml", help="define the lanedata file path")
     optParser.add_option("--summary_filepath", type="string",
                          default="summary.xml", help="define the summary output file path")
     optParser.add_option("--emissions_filepath", type="string",
@@ -140,6 +142,7 @@ if __name__ == "__main__":
         "--lateral-resolution", str(settings.LATERAL_RESOLUTION),
         "--device.bluelight.reactiondist", str(settings.BLUE_LIGHT_REACTION_DIST),
         "--tripinfo-output", f'data/{options.tripinfo_filepath}',
+        "--lanedata-output", f'data/{options.lanedata_filepath}',
         "-S",
         "-Q",
     ])  
@@ -157,8 +160,8 @@ if __name__ == "__main__":
         f'data/{options.tripinfo_filepath}',
         f'data/{options.tripinfo_filepath[:-4]}.csv',
     )
-    edgedata_xml_to_csv(
-        f'data/{options.edgedata_filepath}',
-        f'data/{options.edgedata_filepath[:-4]}.csv',
+    lanedata_xml_to_csv(
+        f'data/{options.lanedata_filepath}',
+        f'data/{options.lanedata_filepath[:-4]}.csv',
     )
     print('CSV files generated!')

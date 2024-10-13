@@ -182,17 +182,18 @@ def is_tls_allocated_to_a_more_serious_emergency_vehicle(
             if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
                 return True
             
-            # verifica se o veículo de emergência alocado é mais grave que o veículo de emergência requerente
-            if tls_on_green_wave['deadline'] < deadline:
+            if tls_on_green_wave['status'] in ('IN_PROGRESS', 'INITIAL_TRANSITION'):
+                # verifica se o veículo de emergência alocado é mais grave que o veículo de emergência requerente
+                if tls_on_green_wave['deadline'] < deadline:
+                    return True
+                
+                # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
+                # if settings.severity_order[tls_on_green_wave['severity']] > settings.severity_order[severity]:
+                #     return True
+                
+                # inicia transição final do green wave, na próxima iteração pega o veículo de emergência mais grave
+                settings.buffer_tls_on_green_wave[key]['status'] == 'FINAL_TRANSITION'
                 return True
-             
-            # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
-            # if settings.severity_order[tls_on_green_wave['severity']] > settings.severity_order[severity]:
-            #     return True
-            
-            # inicia transição final do green wave, na próxima iteração pega o veículo de emergência mais grave
-            settings.buffer_tls_on_green_wave[key]['status'] == 'FINAL_TRANSITION'
-            return True
     return False
 
 
