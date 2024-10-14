@@ -66,6 +66,7 @@ class Config:
         self.CAR_FOLLOW_MODEL: str = 'EIDM' # Krauss or IDM or EIDM
         self.ALGORITHM = 'proposto' # default or proposto
 
+        self.SAFE_GUARD_PROPORTION_FOR_COMPLETION_GWA = 0.8 # safe reason for completion of green wave
         self.MAX_ELIGIBLE_ACCIDENTED_ROADS = 4 # Maximum number of accidented roads
         self.VEHICLE_DISTANCE_TO_TLS = 300 # Cooperative traffic management for emergency vehicles in the city of bologna, SUMO2017
         self.TIME_FOR_NEXT_ACCIDENT = 300.0 # seconds to create next accident

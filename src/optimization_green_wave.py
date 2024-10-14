@@ -1,3 +1,4 @@
+import math
 from config import (
     traci,
     settings,
@@ -64,6 +65,8 @@ def store_green_wave(tls_id: str, veh_emergency_id: str, severity: str, deadline
             'first_edge_on_route_to_reach_tls_id': first_edge_on_route_to_reach_tls_id,
             'change_transition': False,
             'time_limit': traci.simulation.getTime(),
+            'arrival_position': traci.junction.getPosition(tls_id),
+            'starting_position': traci.vehicle.getPosition(veh_emergency_id),
         })
 
 
@@ -182,18 +185,21 @@ def is_tls_allocated_to_a_more_serious_emergency_vehicle(
             if tls_on_green_wave['veh_emergency_id'] == veh_emergency_id:
                 return True
             
-            if tls_on_green_wave['status'] in ('IN_PROGRESS', 'INITIAL_TRANSITION'):
-                # verifica se o veículo de emergência alocado é mais grave que o veículo de emergência requerente
-                if tls_on_green_wave['deadline'] < deadline:
-                    return True
-                
-                # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
-                # if settings.severity_order[tls_on_green_wave['severity']] > settings.severity_order[severity]:
-                #     return True
-                
-                # inicia transição final do green wave, na próxima iteração pega o veículo de emergência mais grave
-                settings.buffer_tls_on_green_wave[key]['status'] == 'FINAL_TRANSITION'
+            if proportion_to_conclude_green_wave(key) >= settings.SAFE_GUARD_PROPORTION_FOR_COMPLETION_GWA:
                 return True
+            
+            # verifica se o veículo de emergência alocado é mais grave que o veículo de emergência requerente
+            if tls_on_green_wave['deadline'] < deadline:
+                return True
+            
+            # verifica se o veículo de emergência atual é mais grave que o veículo de emergência alocado
+            # if settings.severity_order[tls_on_green_wave['severity']] > settings.severity_order[severity]:
+            #     return True
+            
+            # inicia transição final do green wave, na próxima iteração pega o veículo de emergência mais grave
+            if settings.buffer_tls_on_green_wave[key]['status'] in ('IN_PROGRESS', 'INITIAL_TRANSITION'):
+                settings.buffer_tls_on_green_wave[key]['status'] == 'FINAL_TRANSITION'
+            return True
     return False
 
 
@@ -225,3 +231,15 @@ def remove_tls_on_green_wave(key: str):
     traci.trafficlight.setProgram(tls_id, original_tl_program)
     settings.buffer_tls_on_green_wave.pop(key)
     print(f'{traci.simulation.getTime()} - Emergency Vehicle {veh_emergency_id} has left TLS {tls_on_green_wave["tls_id"]}')
+
+
+def proportion_to_conclude_green_wave(key: str):
+    x1, y1 = settings.buffer_tls_on_green_wave[key]['starting_position']
+    x2, y2 = settings.buffer_tls_on_green_wave[key]['arrival_position']
+    x3, y3 = traci.vehicle.getPosition(settings.buffer_tls_on_green_wave[key]['veh_emergency_id'])
+    
+    # Calcula a distância euclidiana
+    euclidian_distance_arrival = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+    euclidian_distance_current = math.sqrt((x3 - x1)**2 + (y3 - y1)**2)
+    return euclidian_distance_current / euclidian_distance_arrival
+    
