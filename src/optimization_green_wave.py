@@ -198,7 +198,7 @@ def is_tls_allocated_to_a_more_serious_emergency_vehicle(
             
             # inicia transição final do green wave, na próxima iteração pega o veículo de emergência mais grave
             if settings.buffer_tls_on_green_wave[key]['status'] in ('IN_PROGRESS', 'INITIAL_TRANSITION'):
-                settings.buffer_tls_on_green_wave[key]['status'] == 'FINAL_TRANSITION'
+                settings.buffer_tls_on_green_wave[key]['status'] = 'FINAL_TRANSITION'
             return True
     return False
 
