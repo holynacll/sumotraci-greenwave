@@ -3,7 +3,7 @@ from collections import namedtuple
 import os
 import sys
 
-os.environ['SUMO_HOME'] = "/home/acll/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
+os.environ['SUMO_HOME'] = "/home/acll/workspace/ufba/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 # os.environ['SUMO_HOME'] = "/home/alexandre-cury/workspace/sumotraci-greenwave/.venv/lib/python3.11/site-packages/sumo"
 
 
