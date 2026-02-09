@@ -1,0 +1,21 @@
+<configuration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://sumo.dlr.de/xsd/sumoConfiguration.xsd">
+
+    <input>
+        <net-file value="road.net.xml" />
+        <route-files value="route.rou.xml" />
+    </input>
+
+    <output>
+        <summary value="summary.xml" />
+    </output>
+
+    <time>
+        <begin value="0" />
+    </time>
+
+    <report>
+        <verbose value="true" />
+        <no-step-log value="true" />
+    </report>
+
+</configuration>
