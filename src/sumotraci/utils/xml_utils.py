@@ -37,7 +37,7 @@ def emission_xml_to_csv(xml_file: str, csv_file: str, settings: Settings):
                 csv_writer.writerow(vehicle_data)
 
 
-def edgedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings):
+def edgedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings, saveds: int, un_saveds: int):
     try:
         tree = ET.parse(xml_file)
         root = tree.getroot()
@@ -60,8 +60,8 @@ def edgedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings):
                 interval_data['DELAY_TO_DISPATCH_EMERGENCY_VEHICLE'] = settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE
                 interval_data['CAR_FOLLOW_MODEL'] = settings.CAR_FOLLOW_MODEL
                 interval_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
-                interval_data['SAVEDS'] = settings.count_saveds
-                interval_data['UNSAVEDS'] = settings.count_accidents - settings.count_saveds
+                interval_data['SAVEDS'] = saveds
+                interval_data['UNSAVEDS'] = un_saveds
 
                 if csv_writer is None:
                     headers = list(interval_data.keys())
@@ -71,7 +71,9 @@ def edgedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings):
                 csv_writer.writerow(interval_data)
 
 
-def tripinfo_xml_to_csv(xml_file: str, csv_file: str, settings: Settings): # Changed signature to accept settings
+def tripinfo_xml_to_csv(
+    xml_file: str, csv_file: str, settings: Settings, saveds: int, un_saveds: int
+):
     try:
         tree = ET.parse(xml_file)
         root = tree.getroot()
@@ -106,8 +108,8 @@ def tripinfo_xml_to_csv(xml_file: str, csv_file: str, settings: Settings): # Cha
             tripinfo_data['DELAY_TO_DISPATCH_EMERGENCY_VEHICLE'] = settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE
             tripinfo_data['CAR_FOLLOW_MODEL'] = settings.CAR_FOLLOW_MODEL
             tripinfo_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
-            tripinfo_data['SAVEDS'] = settings.count_saveds
-            tripinfo_data['UNSAVEDS'] = settings.count_accidents - settings.count_saveds
+            tripinfo_data['SAVEDS'] = saveds
+            tripinfo_data['UNSAVEDS'] = un_saveds
 
             if csv_writer is None:
                 headers = list(tripinfo_data.keys())
@@ -117,7 +119,7 @@ def tripinfo_xml_to_csv(xml_file: str, csv_file: str, settings: Settings): # Cha
             csv_writer.writerow(tripinfo_data)
 
 
-def lanedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings):
+def lanedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings, saveds: int, un_saveds: int):
     try:
         tree = ET.parse(xml_file)
         root = tree.getroot()
@@ -143,8 +145,8 @@ def lanedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings):
                     lane_data['DELAY_TO_DISPATCH_EMERGENCY_VEHICLE'] = settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE
                     lane_data['CAR_FOLLOW_MODEL'] = settings.CAR_FOLLOW_MODEL
                     lane_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
-                    lane_data['SAVEDS'] = settings.count_saveds
-                    lane_data['UNSAVEDS'] = settings.count_accidents - settings.count_saveds
+                    lane_data['SAVEDS'] = saveds
+                    lane_data['UNSAVEDS'] = un_saveds
 
                     if csv_writer is None:
                         headers = list(lane_data.keys())

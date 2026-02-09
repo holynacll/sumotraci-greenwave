@@ -1,6 +1,5 @@
 from typing import Dict, List, Tuple
 
-from pydantic import Field
 from pydantic_settings import BaseSettings
 
 from ..domain.enums import SeverityEnum
@@ -40,25 +39,6 @@ class Settings(BaseSettings):
     LATERAL_RESOLUTION: float = 1.8
     BLUE_LIGHT_REACTION_DIST: float = 25.0
     MIN_GAP_EV: float = 3.0
-    MAX_ELIGIBLE_ACCIDENTED_ROADS: int = 100
-
-    # Runtime State Buffers (Non-configurable via env vars)
-    buffer_vehicles_accidenteds: list[dict] = Field(default_factory=list)
-    buffer_schedule_to_dispatch_emergency_vehicle: list[dict] = Field(default_factory=list)
-    buffer_emergency_vehicles: list[dict] = Field(default_factory=list)
-    buffer_tls_on_green_wave: list[dict] = Field(default_factory=list)
-    buffer_roads_freezed_to_new_accidents: list[dict] = Field(default_factory=list)
-
-    # Counters and State
-    count_accidents: int = 0
-    count_saveds: int = 0
-
-    # Internal usage
-    HOSPITAL_POS_START: str = ""
-    HOSPITAL_POS_END: str = ""
-    TIME_FOR_NEXT_ACCIDENT: float = 0.0
-    ELIGIBLE_ACCIDENTED_ROADS: List[str] = Field(default_factory=list)
-
     # Severity Metadata
     SEVERITY_ORDER: Dict[str, int] = {'CRITICAL': 0, 'HIGH': 1, 'MEDIUM': 2, 'LOW': 3}
     SEVERITY_GOLDEN_TIME: Dict[SeverityEnum, int] = {

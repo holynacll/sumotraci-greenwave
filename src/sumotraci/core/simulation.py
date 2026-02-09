@@ -1,6 +1,8 @@
 import os
 import sys
+import traceback
 
+# Setup SUMO path before importing SUMO libs
 if 'SUMO_HOME' in os.environ:
     tools = os.path.join(os.environ.get('SUMO_HOME'), 'tools')
     sys.path.append(tools)
@@ -8,16 +10,7 @@ if 'SUMO_HOME' in os.environ:
 else:
     sys.exit("please declare environment variable 'SUMO_HOME'")
 
-try:
-    import traci
-    import traci.constants as tc
-    from sumolib import checkBinary  # noqa
-    print("traci importado com sucesso.")
-except ModuleNotFoundError as e:
-    print(f"Erro ao importar módulo: {e}")
-    sys.exit("Certifique-se de que o SUMO e o Traci estão instalados corretamente e o caminho do SUMO_HOME está correto.")
-
-import traceback
+from sumolib import checkBinary
 
 from ..managers.accident_manager import AccidentManager
 from ..managers.emergency_manager import EmergencyManager
@@ -25,6 +18,7 @@ from ..managers.traffic_manager import TrafficManager
 from ..utils.sumo_utils import generate_roadfile, generate_routefile, update_sumo_config
 from ..utils.xml_utils import lanedata_xml_to_csv, tripinfo_xml_to_csv
 from .config import Settings
+from .sumo_interface import SumoInterface
 
 
 class SimulationEngine:
@@ -46,11 +40,12 @@ class SimulationEngine:
         self.lanedata_filepath = lanedata_filepath
         self.summary_filepath = summary_filepath
 
-        self.accident_manager = AccidentManager(settings)
-        self.emergency_manager = EmergencyManager(settings, self.accident_manager)
-        self.traffic_manager = TrafficManager(settings)
+        self.sumo = SumoInterface()
+        self.accident_manager = AccidentManager(settings, self.sumo)
+        self.emergency_manager = EmergencyManager(settings, self.accident_manager, self.sumo)
+        self.traffic_manager = TrafficManager(settings, self.sumo, self.emergency_manager)
 
-    def prepare_simulation(self):
+    def prepare_simulation(self) -> None:
         print('Generating configuration files...')
         road_file_generated = generate_roadfile(road_filepath=self.road_filepath, settings=self.settings)
         generate_routefile(
@@ -66,7 +61,7 @@ class SimulationEngine:
             new_sumoconfig_filepath=self.sumocfg_path,
         )
 
-    def run(self):
+    def run(self) -> None:
         self.prepare_simulation()
 
         if self.nogui:
@@ -74,7 +69,7 @@ class SimulationEngine:
         else:
             sumoBinary = checkBinary('sumo-gui')
 
-        traci.start([
+        self.sumo.start([
             sumoBinary,
             "-c", self.sumocfg_path,
             "--lateral-resolution", str(self.settings.LATERAL_RESOLUTION),
@@ -95,10 +90,10 @@ class SimulationEngine:
             self.accident_manager.generate_elegible_accidented_roads_and_hospital_positions()
 
             while self._should_continue_sim():
-                traci.simulationStep()
+                self.sumo.simulation_step()
                 self.emergency_manager.monitor_emergency_vehicles()
 
-                actual_time = traci.simulation.getTime()
+                actual_time = self.sumo.get_time()
                 if actual_time < self.settings.SIMULATION_END_TIME:
                     if actual_time % 10 == 0:
                         self.accident_manager.create_accident()
@@ -107,54 +102,49 @@ class SimulationEngine:
 
                 if self.settings.ALGORITHM == 'proposto':
                     self.traffic_manager.improve_traffic_for_emergency_vehicle()
-                    # Note: Original main.py calls improve_traffic_for_emergency_vehicle (queue 13)
-                    # It also imported optimization_reroute but didn't call improve_traffic_on_accidented_road
-                    # in the loop. Checking if I should add it.
-                    # Original main.py Line 14 imported `improve_traffic_on_accidented_road`
-                    # but line 49 only calls `improve_traffic_for_emergency_vehicle`.
-                    # I will stick to main.py logic. The reroute logic might be unused or implicitly called?
-                    # Ah, traffic_manager.improve_traffic_for_emergency_vehicle only does green wave.
-                    # optimization_reroute was imported but NOT used in the provided main.py loop.
-                    # I will keep it available in TrafficManager but won't call it unless requested or found otherwise.
 
                 step += 1
 
                 if (
                     actual_time > self.settings.SIMULATION_END_TIME
-                    and len(self.settings.buffer_emergency_vehicles) == 0
-                    and len(self.settings.buffer_vehicles_accidenteds) == 0
+                    and len(self.emergency_manager.buffer_emergency_vehicles) == 0
+                    and len(self.accident_manager.vehicles_accidenteds) == 0
                 ):
                     break
 
             print('Simulation finished!')
-            print(f'Saveds: {self.settings.count_saveds}')
-            print(f'Unsaveds: {self.settings.count_accidents - self.settings.count_saveds}')
+            print(f'Saveds: {self.emergency_manager.count_saveds}')
+            print(f'Unsaveds: {self.accident_manager.count_accidents - self.emergency_manager.count_saveds}')
 
             print('Generating CSV files...')
+            saveds = self.emergency_manager.count_saveds
+            un_saveds = self.accident_manager.count_accidents - saveds
+
             if self.tripinfo_filepath:
                 tripinfo_xml_to_csv(
                     f'data/{self.tripinfo_filepath}',
                     f'data/{self.tripinfo_filepath[:-4]}.csv',
-                    self.settings
+                    self.settings,
+                    saveds,
+                    un_saveds
                 )
 
             if self.lanedata_filepath:
                 lanedata_xml_to_csv(
                     f'data/{self.lanedata_filepath}',
                     f'data/{self.lanedata_filepath[:-4]}.csv',
-                    self.settings
+                    self.settings,
+                    saveds,
+                    un_saveds
                 )
 
-            # emission_xml_to_csv? It wasn't in original list of calls in run(),
-            # but if implemented I should check if it needs update.
-            # Assuming only these two are called here based on context.
             print('CSV files generated!')
 
         except Exception:
             print(traceback.format_exc())
         finally:
-            traci.close()
+            self.sumo.close()
 
-    def _should_continue_sim(self):
-        numVehicles = traci.simulation.getMinExpectedNumber()
+    def _should_continue_sim(self) -> bool:
+        numVehicles = self.sumo.get_min_expected_number()
         return numVehicles > 0
