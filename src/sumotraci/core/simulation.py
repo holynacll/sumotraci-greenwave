@@ -14,7 +14,7 @@ from sumolib import checkBinary
 
 from ..managers.accident_manager import AccidentManager
 from ..managers.emergency_manager import EmergencyManager
-from ..managers.traffic_manager import TrafficManager
+from ..managers.traffic import TrafficManager
 from ..utils.sumo_utils import generate_roadfile, generate_routefile, update_sumo_config
 from ..utils.xml_utils import lanedata_xml_to_csv, tripinfo_xml_to_csv
 from .config import Settings
