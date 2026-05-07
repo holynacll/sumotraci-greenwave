@@ -1,8 +1,11 @@
 from typing import Dict, List, Tuple
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 from ..domain.enums import SeverityEnum
+
+_VALID_ALGORITHMS = {"default", "proposto", "edf_greenwave", "mpc"}
 
 
 class Settings(BaseSettings):
@@ -16,6 +19,8 @@ class Settings(BaseSettings):
     TIME_TO_BLOCK_CREATE_ACCIDENTS: float = 50.0
     DELAY_TO_DISPATCH_EMERGENCY_VEHICLE: float = 120.0
     CAR_FOLLOW_MODEL: str = 'EIDM'
+    # Control algorithm. Accepted: 'default', 'proposto', 'edf_greenwave', 'mpc'.
+    # See docs/MPC_PLAN.md for the meaning of each and the planned MPC strategy.
     ALGORITHM: str = 'proposto'
 
     # Traffic Management
@@ -59,6 +64,13 @@ class Settings(BaseSettings):
         SeverityEnum.MEDIUM: 1.0,
         SeverityEnum.LOW: 1.0
     }
+
+    @field_validator("ALGORITHM")
+    @classmethod
+    def validate_algorithm(cls, v: str) -> str:
+        if v not in _VALID_ALGORITHMS:
+            raise ValueError(f"ALGORITHM must be one of {sorted(_VALID_ALGORITHMS)}, got '{v}'")
+        return v
 
     model_config = {
         "env_file": ".env",

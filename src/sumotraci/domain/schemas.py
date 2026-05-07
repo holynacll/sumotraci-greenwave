@@ -1,4 +1,4 @@
-from typing import List, Optional, Set, Tuple
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -37,22 +37,13 @@ class EmergencyVehicle(BaseModel):
     vehicle_removed: bool = False
 
 
-class GreenWaveTLS(BaseModel):
+class GreenWaveAllocationView(BaseModel):
+    """Read-only snapshot of a TLS allocation, exposed to readers outside the manager."""
     tls_id: str
     veh_emergency_id: str
-    severity: str
     deadline: float
-    original_tl_program: str
-    ryg_state: Optional[str] = None
-    status: str = 'INITIAL_TRANSITION'
-    controlled_lanes: List[str]
-    controlled_edges: Set[str]
-    next_edges: List[str]
-    first_edge_on_route_to_reach_tls_id: str
-    change_transition: bool = False
-    time_limit: float
-    arrival_position: Tuple[float, float]
-    starting_position: Tuple[float, float]
+    severity: str
+    phase: str  # 'CLEARING' | 'EV_GREEN' | 'EXIT_YELLOW'
 
 
 class RoadFreezed(BaseModel):

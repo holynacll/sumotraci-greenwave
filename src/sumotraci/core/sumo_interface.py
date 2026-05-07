@@ -142,6 +142,10 @@ class SumoInterface:
     ) -> None:
         traci.edge.adaptTraveltime(edge_id, time, begin, end)
 
+    # --- Lane Management ---
+    def lane_get_edge_id(self, lane_id: str) -> str:
+        return traci.lane.getEdgeID(lane_id)
+
     # --- Traffic Light Management ---
     def trafficlight_get_controlled_lanes(self, tls_id: str) -> List[str]:
         return traci.trafficlight.getControlledLanes(tls_id)

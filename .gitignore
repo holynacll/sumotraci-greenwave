@@ -1,9 +1,140 @@
-.venv
+```gitignore
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# UV
+.uv/
+uv.lock
+
+# Pipenv
+Pipfile.lock
+
+# Poetry
+poetry.lock
+
+# Hatch
+.hatch/
+
+# Pyenv
+.python-version
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Pytest
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Ruff
+.ruff_cache/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# Pytype
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Environment variables
 .env
-__pycache__
-src/data
-src/output
-src/output_bkp
-src/output_bkp2
-src/__pycache__
-src/__pycache__/
+.env.*
+!.env.example
+
+# Database files
+*.sqlite3
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+
+# Coverage reports
+coverage.xml
+
+# Sphinx documentation
+docs/_build/
+
+# mkdocs
+site/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Docker
+docker-compose.override.yml
+
+# Local settings
+local_settings.py
+
+# Cache
+.cache/
+
+# Testing
+nosetests.xml
+*.cover
+*.py,cover
+
+# Type checker
+.pyright/
+
+# VSCode test artifacts
+.testing/
+
+# PDM
+.pdm.toml
+.pdm-python/
+```

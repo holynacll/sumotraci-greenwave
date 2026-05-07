@@ -100,8 +100,7 @@ class SimulationEngine:
                     if actual_time % 10 == 0:
                         self.emergency_manager.call_emergency_vehicle()
 
-                if self.settings.ALGORITHM == 'proposto':
-                    self.traffic_manager.improve_traffic_for_emergency_vehicle()
+                self.traffic_manager.improve_traffic_for_emergency_vehicle()
 
                 step += 1
 
