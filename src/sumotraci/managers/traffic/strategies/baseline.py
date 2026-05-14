@@ -5,7 +5,7 @@ from .base import TrafficControlStrategy
 
 
 class NoOpStrategy(TrafficControlStrategy):
-    """Used when ALGORITHM='default'. Makes no changes to traffic lights."""
+    """Used when ALGORITHM='baseline'. Makes no changes to traffic lights."""
 
     def improve(self) -> None:
         return

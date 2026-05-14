@@ -4,14 +4,12 @@ from pydantic_settings import BaseSettings
 from ..domain.enums import SeverityEnum
 
 _VALID_ALGORITHMS = {
-    "default",
-    "legacy_greenwave",
-    "fsm_greenwave",
-    "proposto",
-    "edf_greenwave",
+    "baseline",
+    "greenwave_legacy",
+    "greenwave",
     "mpc",
-    "shield",
 }
+_VALID_GW_PRIORITY = {"deadline", "eta"}
 
 
 class Settings(BaseSettings):
@@ -34,21 +32,26 @@ class Settings(BaseSettings):
     DELAY_TO_DISPATCH_EMERGENCY_VEHICLE: float = 120.0
     CAR_FOLLOW_MODEL: str = "Krauss"
     # Control algorithm. Accepted:
-    #   'default'           — no preemption (SUMO baseline)
-    #   'legacy_greenwave'  — original pre-refactor green-wave (deadline-based,
-    #                          4-status FSM, no spillback/queue/anti-flicker).
-    #   'fsm_greenwave'     — adds only the 3-phase FSM + visual highlight on top
-    #                          of legacy (still deadline-based, still no queue
-    #                          and no anti-flicker, no spillback). Intermediate
-    #                          ablation step.
-    #   'proposto' / 'edf_greenwave' — adds ETA-based priority + pending queue
-    #                          + anti-flicker on top of fsm_greenwave.
-    #   'shield'            — adds the spillback shield (BFS-by-depth) on top
-    #                          of edf_greenwave (Phase A).
+    #   'baseline'          — no preemption (SUMO default behaviour)
+    #   'greenwave_legacy'  — original pre-refactor green-wave, frozen as a
+    #                          comparison baseline (4-status FSM, deadline-based,
+    #                          no queue/anti-flicker/spillback). No plugins.
+    #   'greenwave'         — unified engine; improvements composed via the GW_*
+    #                          toggles below.
     #   'mpc'               — Phase B (not implemented).
     # See docs/ALGORITHMS.md for the full evolution table and ablation guide.
-    # See docs/SPILLBACK_PLAN.md for shield (Phase A) and mpc_capacity (Phase B).
-    ALGORITHM: str = "shield"
+    ALGORITHM: str = "greenwave"
+
+    # 'greenwave' composition. Defaults reproduce the former 'shield' algorithm.
+    #   GW_PRIORITY: priority policy slot — "deadline" (raw mission deadline) or
+    #               "eta" (ETA at TLS + severity penalty). Exactly one is active.
+    #   GW_ANTIFLICKER: toggle MIN_EV_GREEN_HOLD + PREEMPT_DELTA_THRESHOLD.
+    #   GW_PENDING_QUEUE: toggle the pending-allocation queue with hand-off.
+    #   GW_SPILLBACK: toggle the BFS spillback detector + drain mechanism.
+    GW_PRIORITY: str = "eta"
+    GW_ANTIFLICKER: bool = True
+    GW_PENDING_QUEUE: bool = True
+    GW_SPILLBACK: bool = True
 
     # Traffic Management
     SAFE_GUARD_PROPORTION_FOR_COMPLETION_GWA: float = 0.8
@@ -130,6 +133,15 @@ class Settings(BaseSettings):
         if v not in _VALID_ALGORITHMS:
             raise ValueError(
                 f"ALGORITHM must be one of {sorted(_VALID_ALGORITHMS)}, got '{v}'"
+            )
+        return v
+
+    @field_validator("GW_PRIORITY")
+    @classmethod
+    def validate_gw_priority(cls, v: str) -> str:
+        if v not in _VALID_GW_PRIORITY:
+            raise ValueError(
+                f"GW_PRIORITY must be one of {sorted(_VALID_GW_PRIORITY)}, got '{v}'"
             )
         return v
 

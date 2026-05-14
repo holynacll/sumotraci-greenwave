@@ -2,5 +2,9 @@ from .edf import ArbitrationPolicy as ArbitrationPolicy
 from .edf import EDFArbitration as EDFArbitration
 from .green_wave import GreenWaveManager as GreenWaveManager
 from .manager import TrafficManager as TrafficManager
+from .priority import DeadlinePriority as DeadlinePriority
+from .priority import ETAPriority as ETAPriority
+from .priority import PriorityPolicy as PriorityPolicy
+from .priority import make_priority_policy as make_priority_policy
 from .spillback import SpillbackDetector as SpillbackDetector
 from .spillback import SpillbackSignal as SpillbackSignal

@@ -59,29 +59,6 @@ def first_route_edge_at_tls(
     return None
 
 
-def compute_priority_value(
-    distance: float, current_speed: float, severity: str, settings: Settings
-) -> float:
-    """Compute the ETA-based priority value for an EV request at a TLS.
-
-    priority_value = distance / max(current_speed, MIN_SPEED_FLOOR_FOR_ETA)
-                     + SEVERITY_ETA_PENALTY[severity]
-
-    Lower = higher priority (wins EDF arbitration). The speed floor prevents
-    divide-by-zero and avoids assigning unbounded ETA to a momentarily-stopped
-    EV. Severity adds a small additive penalty so that — for similar ETAs — a
-    more critical mission wins, but proximity dominates when ETAs differ
-    meaningfully.
-    """
-    speed = max(current_speed, settings.MIN_SPEED_FLOOR_FOR_ETA)
-    eta = distance / speed
-    try:
-        penalty = settings.SEVERITY_ETA_PENALTY[SeverityEnum(severity)]
-    except (ValueError, KeyError):
-        penalty = 0.0
-    return eta + penalty
-
-
 class GreenWaveManager:
     """
     Drives a 3-phase preemption per active allocation:
@@ -116,12 +93,25 @@ class GreenWaveManager:
         settings: Settings,
         sumo: SumoInterface,
         arbitration: Optional[ArbitrationPolicy] = None,
+        min_ev_green_hold: Optional[float] = None,
+        use_pending_queue: bool = True,
     ):
         self.settings = settings
         self.sumo = sumo
         self.arbitration: ArbitrationPolicy = arbitration or EDFArbitration(
             delta=settings.PREEMPT_DELTA_THRESHOLD
         )
+        # Anti-flicker hold window. Pass 0.0 to disable the EV_GREEN lock-out
+        # (the strategy does this when GW_ANTIFLICKER is off).
+        self._min_ev_green_hold: float = (
+            min_ev_green_hold
+            if min_ev_green_hold is not None
+            else settings.MIN_EV_GREEN_HOLD
+        )
+        # When False, requests that lose arbitration are dropped instead of
+        # queued; the strategy re-requests next tick. With the queue empty,
+        # tick()/_handoff_or_restore() naturally degenerate to plain restore.
+        self._use_pending_queue: bool = use_pending_queue
         self._allocations: List[_Allocation] = []
         self._highlight_counter: int = 0
 
@@ -151,10 +141,12 @@ class GreenWaveManager:
                 existing.priority_value = priority_value
                 return True
             if self._holder_is_locked(existing):
-                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                if self._use_pending_queue:
+                    self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
                 return True
             if not self.arbitration.can_preempt(existing.priority_value, priority_value):
-                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                if self._use_pending_queue:
+                    self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
                 return True
             # Preempt: tear down the holder and fall through to install the new one.
             # The displaced holder's pending list is discarded — the strategy will
@@ -285,7 +277,7 @@ class GreenWaveManager:
             return False
         if holder.phase != Phase.EV_GREEN or holder.ev_green_started_at is None:
             return False
-        return (self.sumo.get_time() - holder.ev_green_started_at) < self.settings.MIN_EV_GREEN_HOLD
+        return (self.sumo.get_time() - holder.ev_green_started_at) < self._min_ev_green_hold
 
     def _enqueue(
         self,
