@@ -36,6 +36,10 @@ class SumoInterface:
         # Returns a Stage object (traci.simulation.Stage) which has .edges attribute
         return traci.simulation.findRoute(fromEdge=from_edge, toEdge=to_edge)
 
+    def simulation_get_colliding_vehicles_id_list(self) -> List[str]:
+        # IDs of vehicles that collided in the current step (before --collision.action removes them).
+        return traci.simulation.getCollidingVehiclesIDList()
+
     # --- Vehicle Management ---
     def vehicle_get_id_list(self) -> List[str]:
         return traci.vehicle.getIDList()
@@ -57,6 +61,9 @@ class SumoInterface:
 
     def vehicle_get_lane_index(self, veh_id: str) -> int:
         return traci.vehicle.getLaneIndex(veh_id)
+
+    def vehicle_get_speed(self, veh_id: str) -> float:
+        return traci.vehicle.getSpeed(veh_id)
 
     def vehicle_get_position(self, veh_id: str) -> Tuple[float, float]:
         return traci.vehicle.getPosition(veh_id)
@@ -146,9 +153,41 @@ class SumoInterface:
     def lane_get_edge_id(self, lane_id: str) -> str:
         return traci.lane.getEdgeID(lane_id)
 
+    def lane_get_last_step_occupancy(self, lane_id: str) -> float:
+        return traci.lane.getLastStepOccupancy(lane_id)
+
+    def lane_get_last_step_halting_number(self, lane_id: str) -> int:
+        return traci.lane.getLastStepHaltingNumber(lane_id)
+
+    def lane_get_shape(self, lane_id: str) -> List[Tuple[float, float]]:
+        return traci.lane.getShape(lane_id)
+
+    # --- Polygon (visual overlay) Management ---
+    def polygon_add(
+        self,
+        polygon_id: str,
+        shape: List[Tuple[float, float]],
+        color: Tuple[int, int, int, int],
+        fill: bool = False,
+        polygon_type: str = "",
+        layer: int = 0,
+        line_width: float = 1.0,
+    ) -> None:
+        traci.polygon.add(polygon_id, shape, color, fill, polygon_type, layer, line_width)
+
+    def polygon_remove(self, polygon_id: str, layer: int = 0) -> None:
+        traci.polygon.remove(polygon_id, layer)
+
     # --- Traffic Light Management ---
+    def trafficlight_get_id_list(self) -> List[str]:
+        return traci.trafficlight.getIDList()
+
     def trafficlight_get_controlled_lanes(self, tls_id: str) -> List[str]:
         return traci.trafficlight.getControlledLanes(tls_id)
+
+    def trafficlight_get_controlled_links(self, tls_id: str) -> List[List[Tuple[str, str, str]]]:
+        # Returns [signalIndex] -> list of (incomingLane, outgoingLane, viaLane).
+        return traci.trafficlight.getControlledLinks(tls_id)
 
     def trafficlight_get_program(self, tls_id: str) -> str:
         return traci.trafficlight.getProgram(tls_id)

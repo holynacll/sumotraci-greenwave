@@ -40,8 +40,8 @@ class EmergencyVehicle(BaseModel):
 class GreenWaveAllocationView(BaseModel):
     """Read-only snapshot of a TLS allocation, exposed to readers outside the manager."""
     tls_id: str
-    veh_emergency_id: str
-    deadline: float
+    requester_id: str  # vehicle ID for EVs; "drain:<edge>" for spillback drains
+    priority_value: float  # ETA-based priority for EVs; DRAIN_PRIORITY_VALUE for drains. Lower = wins arbitration.
     severity: str
     phase: str  # 'CLEARING' | 'EV_GREEN' | 'EXIT_YELLOW'
 

@@ -72,7 +72,14 @@ def edgedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings, saveds
 
 
 def tripinfo_xml_to_csv(
-    xml_file: str, csv_file: str, settings: Settings, saveds: int, un_saveds: int
+    xml_file: str,
+    csv_file: str,
+    settings: Settings,
+    saveds: int,
+    un_saveds: int,
+    collisions_involved: int = 0,
+    collision_steps: int = 0,
+    ev_collisions: int = 0,
 ):
     try:
         tree = ET.parse(xml_file)
@@ -110,6 +117,9 @@ def tripinfo_xml_to_csv(
             tripinfo_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
             tripinfo_data['SAVEDS'] = saveds
             tripinfo_data['UNSAVEDS'] = un_saveds
+            tripinfo_data['COLLISIONS_INVOLVED'] = collisions_involved
+            tripinfo_data['COLLISION_STEPS'] = collision_steps
+            tripinfo_data['EV_COLLISIONS'] = ev_collisions
 
             if csv_writer is None:
                 headers = list(tripinfo_data.keys())
@@ -119,7 +129,16 @@ def tripinfo_xml_to_csv(
             csv_writer.writerow(tripinfo_data)
 
 
-def lanedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings, saveds: int, un_saveds: int):
+def lanedata_xml_to_csv(
+    xml_file: str,
+    csv_file: str,
+    settings: Settings,
+    saveds: int,
+    un_saveds: int,
+    collisions_involved: int = 0,
+    collision_steps: int = 0,
+    ev_collisions: int = 0,
+):
     try:
         tree = ET.parse(xml_file)
         root = tree.getroot()
@@ -147,6 +166,9 @@ def lanedata_xml_to_csv(xml_file: str, csv_file: str, settings: Settings, saveds
                     lane_data['TIME_TO_BLOCK_CREATE_ACCIDENTS'] = settings.TIME_TO_BLOCK_CREATE_ACCIDENTS
                     lane_data['SAVEDS'] = saveds
                     lane_data['UNSAVEDS'] = un_saveds
+                    lane_data['COLLISIONS_INVOLVED'] = collisions_involved
+                    lane_data['COLLISION_STEPS'] = collision_steps
+                    lane_data['EV_COLLISIONS'] = ev_collisions
 
                     if csv_writer is None:
                         headers = list(lane_data.keys())

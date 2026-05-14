@@ -23,11 +23,17 @@ def generate_roadfile(road_filepath: str, settings: Settings):
     return full_road_filepath
 
 
-def generate_routefile(route_filepath: str, trips_filepath: str, road_filepath: str, seed: int, settings: Settings):
+def generate_routefile(
+    route_filepath: str,
+    trips_filepath: str,
+    road_filepath: str,
+    seed: int,
+    settings: Settings,
+):
     full_route_filepath = f"data/{route_filepath}"
 
     # Ensure SUMO_HOME is set
-    sumo_home = os.environ.get('SUMO_HOME')
+    sumo_home = os.environ.get("SUMO_HOME")
     if not sumo_home:
         # Fallback or error? defaulting to original text's path if available could be useful but risky.
         # Better to warn.
@@ -38,7 +44,7 @@ def generate_routefile(route_filepath: str, trips_filepath: str, road_filepath: 
     cmd = (
         f"python {sumo_home}/tools/randomTrips.py -n {road_filepath} -r {full_route_filepath}"
         f" -b 0 -e {settings.SIMULATION_END_TIME} -p {((settings.SIMULATION_END_TIME - 0) / settings.VEHICLE_NUMBER)}"
-        f" -o {trips_filepath} --fringe-factor 1000"
+        f" -o {trips_filepath} --fringe-factor 10"
         f" --seed {seed}"
         f" --trip-attributes '{trip_attributes}'"
     )
@@ -69,7 +75,8 @@ def _add_emergency_vehicle_type_to_route_file(root, settings: Settings):
     emissionClass="HBEFA3/PC_G_EU4"
     color="red"
     minGap="{settings.MIN_GAP_EV}"
-    speedFactor="1.5"
+    speedFactor="1.2"
+    collisionMinGapFactor="0.0"
     >
         <param key="has.bluelight.device" value="true"/>
         <param key="has.emissions.device" value="true"/>
@@ -96,11 +103,13 @@ def _add_passenger_idm_vehicle_type_to_route_file(root, settings: Settings):
 
 
 def update_sumo_config(
-    summary_filename: str, route_filename: str, new_sumoconfig_filepath: str = 'data/config.sumocfg'
+    summary_filename: str,
+    route_filename: str,
+    new_sumoconfig_filepath: str = "data/config.sumocfg",
 ):
     # Carregar o arquivo config.sumocfg
     # Assuming config.sumocfg exists in data/ or use a template
-    sumoconfig_filepath = 'data/config.sumocfg' # Base template
+    sumoconfig_filepath = "data/config.sumocfg"  # Base template
     if not os.path.exists(sumoconfig_filepath):
         print(f"Warning: Template {sumoconfig_filepath} not found.")
         return
@@ -109,12 +118,12 @@ def update_sumo_config(
     root = tree.getroot()
 
     # Encontrar o elemento summary e atualizar o atributo value
-    for summary in root.iter('summary'):
-        summary.set('value', summary_filename)
+    for summary in root.iter("summary"):
+        summary.set("value", summary_filename)
 
     # Encontrar o elemento summary e atualizar o atributo value
-    for route in root.iter('route-files'):
-        route.set('value', route_filename)
+    for route in root.iter("route-files"):
+        route.set("value", route_filename)
 
     # Salvar o arquivo modificado
     tree.write(new_sumoconfig_filepath)

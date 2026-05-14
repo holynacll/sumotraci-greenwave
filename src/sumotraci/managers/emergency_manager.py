@@ -1,5 +1,3 @@
-from typing import Optional
-
 from ..core.config import Settings
 from ..core.sumo_interface import SumoInterface
 from ..domain.enums import StatusEnum
@@ -8,13 +6,17 @@ from .accident_manager import AccidentManager
 
 
 class EmergencyManager:
-    def __init__(self, settings: Settings, accident_manager: AccidentManager, sumo: SumoInterface):
+    def __init__(
+        self, settings: Settings, accident_manager: AccidentManager, sumo: SumoInterface
+    ):
         self.settings = settings
         self.accident_manager = accident_manager
         self.sumo = sumo
 
         # State
-        self.buffer_schedule_to_dispatch_emergency_vehicle: list[EmergencyDispatchSchedule] = []
+        self.buffer_schedule_to_dispatch_emergency_vehicle: list[
+            EmergencyDispatchSchedule
+        ] = []
         self.buffer_emergency_vehicles: list[EmergencyVehicle] = []
         self.count_saveds: int = 0
 
@@ -52,7 +54,9 @@ class EmergencyManager:
         for veh_accidented in self.accident_manager.vehicles_accidenteds:
             if veh_accidented.veh_accidented_id == veh_accidented_id:
                 veh_accidented.veh_emergency_id = veh_emergency_id
-                accident.veh_emergency_id = veh_emergency_id # Update local reference too
+                accident.veh_emergency_id = (
+                    veh_emergency_id  # Update local reference too
+                )
                 break
 
         self.create_dispatch_emergency_vehicle(accident=accident)
@@ -64,16 +68,19 @@ class EmergencyManager:
         self.buffer_schedule_to_dispatch_emergency_vehicle.append(
             EmergencyDispatchSchedule(
                 accident=accident,
-                time=self.sumo.get_time() + self.settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE,
+                time=self.sumo.get_time()
+                + self.settings.DELAY_TO_DISPATCH_EMERGENCY_VEHICLE,
             )
         )
         print(
-            f'{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} '
-            f'has been scheduled to help vehicle {veh_accidented_id}'
+            f"{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} "
+            f"has been scheduled to help vehicle {veh_accidented_id}"
         )
 
     def scan_schedule_to_dispatch_emergency_vehicle(self) -> None:
-        for key in range(len(self.buffer_schedule_to_dispatch_emergency_vehicle) - 1, -1, -1):
+        for key in range(
+            len(self.buffer_schedule_to_dispatch_emergency_vehicle) - 1, -1, -1
+        ):
             schedule = self.buffer_schedule_to_dispatch_emergency_vehicle[key]
             if schedule.time <= self.sumo.get_time():
                 accident = schedule.accident
@@ -88,8 +95,8 @@ class EmergencyManager:
         deadline = accident.deadline
         severity = accident.severity
         if veh_emergency_id is None:
-             # Should not happen if logic is correct, but for safety
-             return
+            # Should not happen if logic is correct, but for safety
+            return
 
         try:
             arrival_pos = self.sumo.vehicle_get_lane_position(veh_accidented_id)
@@ -109,7 +116,9 @@ class EmergencyManager:
 
         # Combine routes
         route_1_edges_tuple = route_to_accident.edges
-        route_2_edges_tuple = route_from_accident_to_hospital.edges[1:] # Skip first edge to avoid duplication
+        route_2_edges_tuple = route_from_accident_to_hospital.edges[
+            1:
+        ]  # Skip first edge to avoid duplication
         complete_edge_list = list(route_1_edges_tuple + route_2_edges_tuple)
 
         self.sumo.route_add(route_id=emergency_route_id, edges=complete_edge_list)
@@ -134,18 +143,19 @@ class EmergencyManager:
                 duration=self.settings.MAX_STOP_DURATION,
                 departure_time=self.sumo.get_time(),
                 time_arrival=None,
-                vehicle_removed=False
+                vehicle_removed=False,
             )
         )
         print(
-            f'{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} has been dispatched to help vehicle '
-            f'{veh_accidented_id} in road {accidented_road_id} with severity {severity}'
+            f"{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} has been dispatched to help vehicle "
+            f"{veh_accidented_id} in road {accidented_road_id} with severity {severity}"
         )
 
-    def find_most_severe_recent_accident(self) -> Optional[Accident]:
+    def find_most_severe_recent_accident(self) -> Accident | None:
         # Filter accidents without emergency vehicle
         filtered_accidents = [
-            accident for accident in self.accident_manager.vehicles_accidenteds
+            accident
+            for accident in self.accident_manager.vehicles_accidenteds
             if accident.veh_emergency_id is None
         ]
 
@@ -153,16 +163,20 @@ class EmergencyManager:
             return None
 
         # Sort by deadline (Earliest Deadline First)
-        filtered_accidents.sort(key=lambda x: (x.deadline))
+        filtered_accidents.sort(key=lambda x: x.deadline)
 
         return filtered_accidents[0]
 
     def monitor_change_lane_accidented_vehicle(self) -> None:
-        for _, accidented_vehicle in enumerate(self.accident_manager.vehicles_accidenteds):
+        for _, accidented_vehicle in enumerate(
+            self.accident_manager.vehicles_accidenteds
+        ):
             veh_accidented_id = accidented_vehicle.veh_accidented_id
             lane_accidented_id = accidented_vehicle.lane_accidented_id
             try:
-                vehicle_follower_obj = self.sumo.vehicle_get_follower(veh_accidented_id, 10.0)
+                vehicle_follower_obj = self.sumo.vehicle_get_follower(
+                    veh_accidented_id, 10.0
+                )
             except self.sumo.TraCIException:
                 self.accident_manager.remove_vehicle_from_accident(veh_accidented_id)
                 continue
@@ -179,34 +193,42 @@ class EmergencyManager:
             if -0.01 < vehicle_follower_distance <= 10.0:
                 actual_lane = self.sumo.vehicle_get_lane_id(vehicle_follower_id)
                 if lane_accidented_id == actual_lane:
-                    lane_index = int(lane_accidented_id.split('_')[1])
-                    lanes_count = self.sumo.edge_get_lane_number(self.sumo.vehicle_get_road_id(vehicle_follower_id))
+                    lane_index = int(lane_accidented_id.split("_")[1])
+                    lanes_count = self.sumo.edge_get_lane_number(
+                        self.sumo.vehicle_get_road_id(vehicle_follower_id)
+                    )
 
                     new_lane_index = None
                     for offset in [-1, 1]:
                         temp_lane_index = lane_index + offset
                         if 0 <= temp_lane_index < lanes_count:
-                            if self.sumo.vehicle_wants_and_could_change_lane(vehicle_follower_id, offset):
+                            if self.sumo.vehicle_wants_and_could_change_lane(
+                                vehicle_follower_id, offset
+                            ):
                                 new_lane_index = temp_lane_index
                                 break
 
                     if new_lane_index is not None:
-                        self.sumo.vehicle_change_lane(vehicle_follower_id, new_lane_index, 5.0)
+                        self.sumo.vehicle_change_lane(
+                            vehicle_follower_id, new_lane_index, 5.0
+                        )
                         print(
-                            f'{self.sumo.get_time()} - Vehicle {vehicle_follower_id} '
-                            f'has changed lane to {new_lane_index}'
+                            f"{self.sumo.get_time()} - Vehicle {vehicle_follower_id} "
+                            f"has changed lane to {new_lane_index}"
                         )
                     else:
                         self.sumo.vehicle_slow_down(
                             vehicle_follower_id,
-                            0.5 * self.sumo.vehicle_get_allowed_speed(vehicle_follower_id),
-                            5.0
+                            0.5
+                            * self.sumo.vehicle_get_allowed_speed(vehicle_follower_id),
+                            5.0,
                         )
 
     def monitor_emergency_vehicles_to_the_hospital(self) -> None:
-        for key in range(len(self.buffer_emergency_vehicles) -1, -1, -1):
+        for key in range(len(self.buffer_emergency_vehicles) - 1, -1, -1):
             emergency_vehicle = self.buffer_emergency_vehicles[key]
             veh_emergency_id = emergency_vehicle.veh_emergency_id
+            veh_accidented_id = emergency_vehicle.veh_accidented_id
             hospital_pos_end = emergency_vehicle.hospital_pos_end
             status = emergency_vehicle.status
 
@@ -214,7 +236,10 @@ class EmergencyManager:
                 try:
                     actual_road = self.sumo.vehicle_get_road_id(veh_emergency_id)
                 except self.sumo.TraCIException:
-                    self.settings.buffer_emergency_vehicles.pop(key)
+                    self.buffer_emergency_vehicles.pop(key)
+                    self.accident_manager.remove_vehicle_from_accident(
+                        veh_accidented_id
+                    )
                     actual_road = None
 
                 if actual_road == hospital_pos_end:
@@ -223,26 +248,31 @@ class EmergencyManager:
                         self.count_saveds += 1
                     self.buffer_emergency_vehicles.pop(key)
                     print(
-                        f'{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} '
-                        f'has arrived at the hospital'
+                        f"{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} "
+                        f"has arrived at the hospital"
                     )
 
     def monitor_emergency_vehicles_in_the_accident(self) -> None:
-        for key in range(len(self.buffer_emergency_vehicles) -1, -1, -1):
+        for key in range(len(self.buffer_emergency_vehicles) - 1, -1, -1):
             emergency_vehicle = self.buffer_emergency_vehicles[key]
             veh_emergency_id = emergency_vehicle.veh_emergency_id
             veh_accidented_id = emergency_vehicle.veh_accidented_id
             status = emergency_vehicle.status
 
             if status == StatusEnum.IN_THE_ACCIDENT.value:
-                self.buffer_emergency_vehicles[key].status = StatusEnum.TO_THE_HOSPITAL.value
+                self.buffer_emergency_vehicles[
+                    key
+                ].status = StatusEnum.TO_THE_HOSPITAL.value
                 self.accident_manager.remove_vehicle_from_accident(veh_accidented_id)
-                print(f'{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} has left the accident')
+                print(
+                    f"{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} has left the accident"
+                )
 
     def monitor_emergency_vehicles_on_the_way(self) -> None:
-        for key in range(len(self.buffer_emergency_vehicles) -1, -1, -1):
+        for key in range(len(self.buffer_emergency_vehicles) - 1, -1, -1):
             emergency_vehicle = self.buffer_emergency_vehicles[key]
             veh_emergency_id = emergency_vehicle.veh_emergency_id
+            veh_accidented_id = emergency_vehicle.veh_accidented_id
             accidented_road_id = emergency_vehicle.accidented_road_id
             arrival_pos = emergency_vehicle.arrival_pos
             status = emergency_vehicle.status
@@ -251,19 +281,29 @@ class EmergencyManager:
                 try:
                     actual_road = self.sumo.vehicle_get_road_id(veh_emergency_id)
                 except self.sumo.TraCIException:
-                    self.settings.buffer_emergency_vehicles.pop(key)
+                    self.buffer_emergency_vehicles.pop(key)
+                    self.accident_manager.remove_vehicle_from_accident(
+                        veh_accidented_id
+                    )
                     actual_road = None
 
                 if actual_road == accidented_road_id:
-                    distance = self.sumo.vehicle_get_driving_distance(veh_emergency_id, actual_road, arrival_pos)
+                    distance = self.sumo.vehicle_get_driving_distance(
+                        veh_emergency_id, actual_road, arrival_pos
+                    )
                     # Check if close enough
-                    if distance < self.settings.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT:
-                        self.buffer_emergency_vehicles[key].status = StatusEnum.IN_THE_ACCIDENT.value
+                    if (
+                        distance
+                        < self.settings.MIN_ARRIVAL_DISTANCE_EMERGENCY_VEHICLE_AT_THE_ACCIDENT
+                    ):
+                        self.buffer_emergency_vehicles[
+                            key
+                        ].status = StatusEnum.IN_THE_ACCIDENT.value
                         print(
-                            f'{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} '
-                            f'has arrived at the accident'
+                            f"{self.sumo.get_time()} - Emergency Vehicle {veh_emergency_id} "
+                            f"has arrived at the accident"
                         )
 
     def _is_deadline_alive(self, estimated_deadline: float) -> bool:
-        print(f'Deadline: {estimated_deadline} - Actual Time: {self.sumo.get_time()}')
+        print(f"Deadline: {estimated_deadline} - Actual Time: {self.sumo.get_time()}")
         return estimated_deadline >= self.sumo.get_time()

@@ -3,8 +3,8 @@ import sys
 import traceback
 
 # Setup SUMO path before importing SUMO libs
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ.get('SUMO_HOME'), 'tools')
+if "SUMO_HOME" in os.environ:
+    tools = os.path.join(os.environ.get("SUMO_HOME"), "tools")
     sys.path.append(tools)
     print(f"Pasta tools adicionada ao sys.path: {tools}")
 else:
@@ -13,6 +13,7 @@ else:
 from sumolib import checkBinary
 
 from ..managers.accident_manager import AccidentManager
+from ..managers.collision_manager import CollisionManager
 from ..managers.emergency_manager import EmergencyManager
 from ..managers.traffic import TrafficManager
 from ..utils.sumo_utils import generate_roadfile, generate_routefile, update_sumo_config
@@ -22,14 +23,18 @@ from .sumo_interface import SumoInterface
 
 
 class SimulationEngine:
-    def __init__(self, settings: Settings, nogui: bool = False,
-                 sumocfg_path: str = "data/config.sumocfg",
-                 road_filepath: str = "road.net.xml",
-                 route_filepath: str = "route.rou.xml",
-                 trips_filepath: str = "data/trips.trips.xml",
-                 tripinfo_filepath: str = "tripinfo.xml",
-                 lanedata_filepath: str = "lanedata.xml",
-                 summary_filepath: str = "summary.xml"):
+    def __init__(
+        self,
+        settings: Settings,
+        nogui: bool = False,
+        sumocfg_path: str = "data/config.sumocfg",
+        road_filepath: str = "road.net.xml",
+        route_filepath: str = "route.rou.xml",
+        trips_filepath: str = "data/trips.trips.xml",
+        tripinfo_filepath: str = "tripinfo.xml",
+        lanedata_filepath: str = "lanedata.xml",
+        summary_filepath: str = "summary.xml",
+    ):
         self.settings = settings
         self.nogui = nogui
         self.sumocfg_path = sumocfg_path
@@ -42,18 +47,25 @@ class SimulationEngine:
 
         self.sumo = SumoInterface()
         self.accident_manager = AccidentManager(settings, self.sumo)
-        self.emergency_manager = EmergencyManager(settings, self.accident_manager, self.sumo)
-        self.traffic_manager = TrafficManager(settings, self.sumo, self.emergency_manager)
+        self.emergency_manager = EmergencyManager(
+            settings, self.accident_manager, self.sumo
+        )
+        self.traffic_manager = TrafficManager(
+            settings, self.sumo, self.emergency_manager
+        )
+        self.collision_manager = CollisionManager(settings, self.sumo)
 
     def prepare_simulation(self) -> None:
-        print('Generating configuration files...')
-        road_file_generated = generate_roadfile(road_filepath=self.road_filepath, settings=self.settings)
+        print("Generating configuration files...")
+        road_file_generated = generate_roadfile(
+            road_filepath=self.road_filepath, settings=self.settings
+        )
         generate_routefile(
             route_filepath=self.route_filepath,
             trips_filepath=self.trips_filepath,
             road_filepath=road_file_generated,
             seed=self.settings.SEED,
-            settings=self.settings
+            settings=self.settings,
         )
         update_sumo_config(
             summary_filename=self.summary_filepath,
@@ -65,25 +77,40 @@ class SimulationEngine:
         self.prepare_simulation()
 
         if self.nogui:
-            sumoBinary = checkBinary('sumo')
+            sumoBinary = checkBinary("sumo")
         else:
-            sumoBinary = checkBinary('sumo-gui')
+            sumoBinary = checkBinary("sumo-gui")
 
-        self.sumo.start([
-            sumoBinary,
-            "-c", self.sumocfg_path,
-            "--lateral-resolution", str(self.settings.LATERAL_RESOLUTION),
-            "--device.bluelight.reactiondist", str(self.settings.BLUE_LIGHT_REACTION_DIST),
-            "--tripinfo-output", f'data/{self.tripinfo_filepath}',
-            "--lanedata-output", f'data/{self.lanedata_filepath}',
-            "-S",
-            "-Q",
-        ])
+        self.sumo.start(
+            [
+                sumoBinary,
+                "-c",
+                self.sumocfg_path,
+                "--device.bluelight.reactiondist",
+                str(self.settings.BLUE_LIGHT_REACTION_DIST),
+                # SUMO only warns on collisions; the CollisionManager removes
+                # civilian participants manually and leaves EVs in the sim so
+                # subsequent TraCI calls / EmergencyManager keep working.
+                "--collision.action",
+                "warn",
+                # Speeds up recovery from yield/jam jams behind the EV.
+                "--time-to-teleport",
+                "180",
+                "--tripinfo-output",
+                f"data/{self.tripinfo_filepath}",
+                "--lanedata-output",
+                f"data/{self.lanedata_filepath}",
+                "-S",
+                "-Q",
+            ]
+        )
 
-        print('Running simulation...')
-        print(f'Seed: {self.settings.SEED}')
-        print(f'Time to block create accidents: {self.settings.TIME_TO_BLOCK_CREATE_ACCIDENTS}')
-        print(f'Algorithm: {self.settings.ALGORITHM}')
+        print("Running simulation...")
+        print(f"Seed: {self.settings.SEED}")
+        print(
+            f"Time to block create accidents: {self.settings.TIME_TO_BLOCK_CREATE_ACCIDENTS}"
+        )
+        print(f"Algorithm: {self.settings.ALGORITHM}")
 
         step = 0
         try:
@@ -91,6 +118,7 @@ class SimulationEngine:
 
             while self._should_continue_sim():
                 self.sumo.simulation_step()
+                self.collision_manager.tick()
                 self.emergency_manager.monitor_emergency_vehicles()
 
                 actual_time = self.sumo.get_time()
@@ -111,33 +139,49 @@ class SimulationEngine:
                 ):
                     break
 
-            print('Simulation finished!')
-            print(f'Saveds: {self.emergency_manager.count_saveds}')
-            print(f'Unsaveds: {self.accident_manager.count_accidents - self.emergency_manager.count_saveds}')
+            print("Simulation finished!")
+            print(f"Saveds: {self.emergency_manager.count_saveds}")
+            print(
+                f"Unsaveds: {self.accident_manager.count_accidents - self.emergency_manager.count_saveds}"
+            )
+            print(
+                f"Collisions: {self.collision_manager.total_vehicles_involved} civilians "
+                f"removed across {self.collision_manager.collision_steps} steps "
+                f"(EV-involved events: {self.collision_manager.ev_collisions})"
+            )
 
-            print('Generating CSV files...')
+            print("Generating CSV files...")
             saveds = self.emergency_manager.count_saveds
             un_saveds = self.accident_manager.count_accidents - saveds
+            collisions_involved = self.collision_manager.total_vehicles_involved
+            collision_steps = self.collision_manager.collision_steps
+            ev_collisions = self.collision_manager.ev_collisions
 
             if self.tripinfo_filepath:
                 tripinfo_xml_to_csv(
-                    f'data/{self.tripinfo_filepath}',
-                    f'data/{self.tripinfo_filepath[:-4]}.csv',
+                    f"data/{self.tripinfo_filepath}",
+                    f"data/{self.tripinfo_filepath[:-4]}.csv",
                     self.settings,
                     saveds,
-                    un_saveds
+                    un_saveds,
+                    collisions_involved,
+                    collision_steps,
+                    ev_collisions,
                 )
 
             if self.lanedata_filepath:
                 lanedata_xml_to_csv(
-                    f'data/{self.lanedata_filepath}',
-                    f'data/{self.lanedata_filepath[:-4]}.csv',
+                    f"data/{self.lanedata_filepath}",
+                    f"data/{self.lanedata_filepath[:-4]}.csv",
                     self.settings,
                     saveds,
-                    un_saveds
+                    un_saveds,
+                    collisions_involved,
+                    collision_steps,
+                    ev_collisions,
                 )
 
-            print('CSV files generated!')
+            print("CSV files generated!")
 
         except Exception:
             print(traceback.format_exc())
