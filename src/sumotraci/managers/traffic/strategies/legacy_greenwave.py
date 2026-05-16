@@ -18,9 +18,9 @@ Behaviour preserved verbatim:
   - No spillback awareness, no drain mechanism.
   - No visual overlay.
 """
+
 import math
 from dataclasses import dataclass, field
-from typing import List, Optional, Set, Tuple
 
 from ....core.config import Settings
 from ....core.sumo_interface import SumoInterface
@@ -36,16 +36,16 @@ class _LegacyAllocation:
     severity: str
     deadline: float
     original_tl_program: str
-    controlled_lanes: List[str]
-    controlled_edges: Set[str]
+    controlled_lanes: list[str]
+    controlled_edges: set[str]
     first_edge_on_route_to_reach_tls_id: str
     status: str  # 'INITIAL_TRANSITION' | 'IN_PROGRESS' | 'FINAL_TRANSITION' | 'RETURN_TO_PROGRAM_ORIGINAL'
     change_transition: bool
     time_limit: float
-    arrival_position: Tuple[float, float]
-    starting_position: Tuple[float, float]
-    ryg_state: Optional[str] = None
-    next_edges: List[str] = field(default_factory=list)
+    arrival_position: tuple[float, float]
+    starting_position: tuple[float, float]
+    ryg_state: str | None = None
+    next_edges: list[str] = field(default_factory=list)
 
 
 class LegacyGreenWaveStrategy(TrafficControlStrategy):
@@ -58,7 +58,7 @@ class LegacyGreenWaveStrategy(TrafficControlStrategy):
         self.settings = settings
         self.sumo = sumo
         self.emergency_manager = emergency_manager
-        self._allocations: List[_LegacyAllocation] = []
+        self._allocations: list[_LegacyAllocation] = []
 
     # -------- public API --------
 
@@ -86,9 +86,11 @@ class LegacyGreenWaveStrategy(TrafficControlStrategy):
                     severity=ev.severity,
                     deadline=ev.deadline,
                 ):
-                    self._store_green_wave(tls_id, ev.veh_emergency_id, ev.severity, ev.deadline)
+                    self._store_green_wave(
+                        tls_id, ev.veh_emergency_id, ev.severity, ev.deadline
+                    )
 
-    def active_allocations(self) -> List[GreenWaveAllocationView]:
+    def active_allocations(self) -> list[GreenWaveAllocationView]:
         return [
             GreenWaveAllocationView(
                 tls_id=a.tls_id,
@@ -117,7 +119,7 @@ class LegacyGreenWaveStrategy(TrafficControlStrategy):
             return
         controlled_edges = {lane.split("_")[0] for lane in controlled_lanes}
 
-        first_edge_on_route: Optional[str] = None
+        first_edge_on_route: str | None = None
         for edge in next_edges_sorted:
             if edge in controlled_edges:
                 first_edge_on_route = edge
@@ -200,6 +202,8 @@ class LegacyGreenWaveStrategy(TrafficControlStrategy):
             lane_state = tls_state[index]
             if first_edge in lane and lane_state in ("g", "G"):
                 ryg_state += "G"
+            elif lane_state in ("g", "G"):
+                ryg_state += "y"
             else:
                 ryg_state += lane_state
         try:
@@ -208,7 +212,9 @@ class LegacyGreenWaveStrategy(TrafficControlStrategy):
             return
         item.ryg_state = ryg_state
         item.change_transition = True
-        item.time_limit = self.sumo.get_time() + self.settings.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT
+        item.time_limit = (
+            self.sumo.get_time() + self.settings.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT
+        )
 
     def _green_wave_in_progress(self, key: int) -> None:
         item = self._allocations[key]
@@ -241,7 +247,9 @@ class LegacyGreenWaveStrategy(TrafficControlStrategy):
             return
         item.ryg_state = ryg_state
         item.change_transition = True
-        item.time_limit = self.sumo.get_time() + self.settings.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT
+        item.time_limit = (
+            self.sumo.get_time() + self.settings.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT
+        )
 
     # -------- arbitration --------
 
@@ -296,7 +304,7 @@ class LegacyGreenWaveStrategy(TrafficControlStrategy):
 
     # -------- helpers --------
 
-    def _get_next_edges(self, veh_id: str) -> List[str]:
+    def _get_next_edges(self, veh_id: str) -> list[str]:
         try:
             route = self.sumo.vehicle_get_route(veh_id)
             route_index = self.sumo.vehicle_get_route_index(veh_id)

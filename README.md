@@ -1,197 +1,247 @@
 # SumoTraCI Greenwave
 
-Simulation framework for evaluating emergency-vehicle (EV) preemption strategies
-on a SUMO + TraCI traffic micro-simulation. The codebase compares three traffic-light
-control strategies on the same scenario:
+Framework de simulação para avaliar estratégias de preempção de veículos de
+emergência (EV) sobre SUMO + TraCI. O codebase foi refatorado em torno de
+**três estratégias** comparáveis no mesmo cenário:
 
-- **`default`** — SUMO's stock signal program (no preemption).
-- **`proposto` / `edf_greenwave`** — reactive Green Wave with EDF arbitration and a
-  per-TLS pending queue (the current paper baseline).
-- **`shield`** — spillback-aware preemption: detects downstream saturation and
-  drains the bottleneck instead of forcing green for the EV (planned; see
-  [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md) Phase A).
-- **`mpc_capacity`** — capacity-aware Model Predictive Control over a rolling
-  horizon (planned; see [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md)
-  Phase B). The pure-S&F variant in [`docs/MPC_PLAN.md`](docs/MPC_PLAN.md) is
-  superseded.
+- **`baseline`** — programa de sinalização padrão do SUMO, sem preempção. Piso absoluto.
+- **`greenwave_legacy`** — green-wave original (pré-refactor), **congelado** como
+  ponto de comparação (FSM 4-status, deadline puro, sem fila/anti-flicker/spillback,
+  *safeguard* euclidiano de 0.8).
+- **`greenwave`** — engine único refatorado. As melhorias são **compostas por
+  configuração** (toggles `GW_*`), gerando 16 combinações sem explosão de classes
+  (FSM 3-fase, prioridade plugável, anti-flicker, fila de pendentes, spillback BFS,
+  visualização).
+- **`mpc`** — Phase B, não implementada (`NotImplementedError`).
 
-Built with a modular architecture, Pydantic settings, and modern tooling (`uv`, `typer`).
+A documentação canônica das estratégias, da composição e do guia de ablação está
+em [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md).
 
-## Prerequisites
+Construído com arquitetura modular, Pydantic settings, e tooling moderno (`uv`, `typer`).
+
+## Pré-requisitos
 
 - **Python 3.11+**
 - **[Eclipse SUMO](https://eclipse.dev/sumo/)** (>= 1.21.0)
-- **[uv](https://github.com/astral-sh/uv)** (High-performance Python package installer)
+- **[uv](https://github.com/astral-sh/uv)**
 
-## Installation
+## Instalação
 
-1.  **Install dependencies using `uv`**:
+1.  **Dependências de runtime**:
     ```bash
     uv pip install -e .
     ```
-    *This installs the project in editable mode along with runtime dependencies.*
 
-2.  **Install development dependencies (optional)**:
+2.  **Dependências de desenvolvimento (opcional)**:
     ```bash
     uv pip install -e .[dev]
-    # OR explicitly
-    uv pip install pytest ruff mypy types-requests
     ```
 
-## Usage
+## Uso
 
-### 1. Set SUMO_HOME
-You must have the `SUMO_HOME` environment variable set to your SUMO installation directory.
+### 1. `SUMO_HOME`
 
 ```bash
 export SUMO_HOME=/path/to/your/sumo
-# Example:
-# export SUMO_HOME=/usr/share/sumo
-# export SUMO_HOME=$(pwd)/.venv/lib/python3.11/site-packages/sumo
 ```
 
-### 2. Run the Simulation
-Run the simulation using the new CLI entry point:
+### 2. Rodar a simulação
 
 ```bash
-uv run python -m sumotraci.main --nogui --simulation-end-time 1000
+uv run python -m sumotraci.main --nogui --simulation-end-time 900
 ```
 
-**Common Options:**
--   `--nogui`: Run without the SUMO GUI (headless mode).
--   `--simulation-end-time FLOAT`: Stop the simulation after X seconds.
--   `--time-block-accident FLOAT`: Time interval to block accident creation.
--   `--vehicle-number INT`: Total number of vehicles to simulate.
--   `--algorithm STR`: Traffic-control strategy. Accepted: `default`, `proposto`,
-    `edf_greenwave` (alias for `proposto`), `shield` (planned — see
-    [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md) Phase A), `mpc_capacity`
-    (planned — see [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md) Phase B).
--   `--help`: Show all available options.
+**Opções comuns:**
+- `--nogui`: roda sem GUI (headless).
+- `--simulation-end-time FLOAT`: tempo de fim da simulação (s).
+- `--time-block-accident FLOAT`: intervalo de bloqueio para criação de acidentes.
+- `--vehicle-number INT`: total de veículos.
+- `--algorithm STR`: estratégia (`baseline`, `greenwave_legacy`, `greenwave`, `mpc`).
+- `--seed INT`: seed do RNG.
+- `--help`: lista todas as opções.
 
-**Example with GUI:**
+A composição do `greenwave` (toggles `GW_*`) é definida via `.env` ou variáveis de
+ambiente — não há flag CLI dedicada para cada toggle.
+
+## Composição do `greenwave`
+
+| Config | Tipo | Valores | Papel |
+|---|---|---|---|
+| `GW_PRIORITY` | *policy slot* | `deadline` \| `eta` | Cálculo do `priority_value` (sempre exatamente um). |
+| `GW_ANTIFLICKER` | toggle | `true` \| `false` | Liga `MIN_EV_GREEN_HOLD` + `PREEMPT_DELTA_THRESHOLD`. |
+| `GW_PENDING_QUEUE` | toggle | `true` \| `false` | Fila de alocações pendentes com hand-off. |
+| `GW_SPILLBACK` | toggle | `true` \| `false` | Detector BFS + drenos em saídas saturadas. |
+
+São **16 combinações** (2×2×2×2). Os defaults (`GW_PRIORITY=eta`, todos os
+toggles `true`) reproduzem o antigo algoritmo `shield`.
+
+Exemplos de `.env` para o estudo de ablação:
+
 ```bash
-uv run python -m sumotraci.main --vehicle-number 100 --simulation-end-time 500
+# EDF puro (sem nenhuma melhoria além da FSM 3-fase)
+ALGORITHM=greenwave
+GW_PRIORITY=deadline
+GW_ANTIFLICKER=false
+GW_PENDING_QUEUE=false
+GW_SPILLBACK=false
+
+# Greenwave completo (≡ antigo 'shield')
+ALGORITHM=greenwave
 ```
 
-## Project Structure
+A tabela completa de experimentos está em [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md) §4.
 
-The source code is located in `src/sumotraci/` and is organized as follows:
+## Estrutura do projeto
 
--   **`main.py`**: CLI entry point and application bootstrap.
--   **`core/`**: Core system logic.
-    -   `simulation.py`: Main `SimulationEngine` class.
-    -   `config.py`: `Settings` management using Pydantic.
-    -   `sumo_interface.py`: Typed wrapper around TraCI calls.
--   **`managers/`**: Business logic modules.
-    -   `accident_manager.py`: Accident lifecycle.
-    -   `emergency_manager.py`: EV dispatch and monitoring.
-    -   `traffic/`: Traffic-control package.
-        -   `manager.py`: `TrafficManager` — public facade; delegates to a strategy.
-        -   `green_wave.py`: `GreenWaveManager` — 3-phase preemption FSM with pending queue.
-        -   `edf.py`: `EDFArbitration` policy + `ArbitrationPolicy` Protocol.
-        -   `strategies/`: One module per strategy.
-            -   `base.py` — `TrafficControlStrategy` ABC.
-            -   `default.py` — `NoOpStrategy` (no preemption).
-            -   `edf_greenwave.py` — `EDFGreenWaveStrategy` (current `proposto`).
-            -   `__init__.py` — `make_strategy()` factory.
--   **`domain/`**: Pydantic schemas (`GreenWaveAllocationView`, `EmergencyVehicle`, …)
-    and enums (`SeverityEnum`, `StatusEnum`).
--   **`utils/`**: SUMO scenario generation and XML→CSV post-processing.
+Código-fonte em `src/sumotraci/`:
 
-## Traffic Control Strategies
+- **`main.py`** — entry point CLI (Typer).
+- **`core/`**
+  - `simulation.py` — `SimulationEngine`.
+  - `config.py` — `Settings` (Pydantic).
+  - `sumo_interface.py` — wrapper tipado das chamadas TraCI.
+- **`managers/`**
+  - `accident_manager.py` — ciclo de vida de acidentes.
+  - `emergency_manager.py` — dispatch e monitoramento de EVs.
+  - `collision_manager.py` — colisões com **preservação seletiva do EV**
+    (remove só civis; mantém EV vivo para a simulação continuar).
+  - `traffic/` — pacote de controle de tráfego.
+    - `manager.py` — `TrafficManager` (facade, delega à strategy).
+    - `green_wave.py` — `GreenWaveManager`: FSM 3-fase + fila + anti-flicker + viz.
+    - `edf.py` — `ArbitrationPolicy` Protocol + `EDFArbitration`.
+    - `priority.py` — `PriorityPolicy` slot: `DeadlinePriority`, `ETAPriority`,
+      `make_priority_policy()`.
+    - `spillback.py` — `SpillbackDetector` (BFS-by-depth a partir do TLS raiz).
+    - `strategies/`
+      - `base.py` — `TrafficControlStrategy` ABC.
+      - `baseline.py` — `NoOpStrategy`.
+      - `legacy_greenwave.py` — `LegacyGreenWaveStrategy` (congelada).
+      - `greenwave.py` — `GreenWaveStrategy` (composta via `GW_*`).
+      - `__init__.py` — `make_strategy()`.
+- **`domain/`** — schemas Pydantic e enums (`SeverityEnum`, `StatusEnum`).
+- **`utils/`** — geração de cenário SUMO e pós-processamento XML→CSV.
 
-Strategy is selected at startup via `--algorithm` and dispatched by `make_strategy()`
-in `managers/traffic/strategies/__init__.py`. To add a new strategy, implement
-`TrafficControlStrategy` and register it in the factory.
+## Estratégias
 
-### `default` — `NoOpStrategy`
+Selecionadas em runtime por `Settings.ALGORITHM` e despachadas por `make_strategy()`
+em `managers/traffic/strategies/__init__.py`.
 
-No traffic-light intervention. SUMO's programmed cycles run untouched. EVs get no
-priority. Used as the comparison baseline.
+### `baseline` — `NoOpStrategy`
 
-### `proposto` / `edf_greenwave` — `EDFGreenWaveStrategy`
+Sem intervenção em semáforos. Programas do SUMO rodam intactos. EVs não recebem
+prioridade. Usado como piso absoluto de comparação.
 
-Reactive preemption. Each simulation step the strategy iterates EVs in
-Earliest-Deadline-First order; for every TLS within `VEHICLE_DISTANCE_TO_TLS` of an
-EV, it calls `GreenWaveManager.request(...)`.
+### `greenwave_legacy` — `LegacyGreenWaveStrategy`
 
-The manager runs a **3-phase FSM** per allocation (one allocation = one EV holding
-priority at one TLS):
+Versão original do green-wave (commit `664cef5`), **congelada**. FSM de 4 status
+acoplado por flag (`INITIAL_TRANSITION` → `IN_PROGRESS` → `FINAL_TRANSITION` →
+`RETURN_TO_PROGRAM_ORIGINAL`), prioridade por deadline cru, sem fila, sem
+anti-flicker, sem spillback. Mantém o *safeguard* euclidiano
+(`SAFE_GUARD_PROPORTION_FOR_COMPLETION_GWA = 0.8`). Não recebe plugins novos.
 
-| Phase | Action on entry | Exit condition |
-|-------|------------------|----------------|
-| `CLEARING` | Yellow on opposing greens; preserve EV's lane | Wait `TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT` (8 s) |
-| `EV_GREEN` | Green for EV's lane, red elsewhere | EV no longer in `getNextTLS` within range |
-| `EXIT_YELLOW` | Yellow on EV's greens | Wait `TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT` (8 s), then restore or hand off |
+### `greenwave` — `GreenWaveStrategy`
 
-Conflicts are resolved by **EDF arbitration** (`ArbitrationPolicy.can_preempt`). When
-a request loses arbitration to the current holder, it joins the holder's **pending
-queue** (sorted by deadline). When the holder finishes, the manager either:
+Engine refatorado, composto via `GW_*`. A cada step a strategy:
 
-- promotes the next still-relevant pending EV directly into `CLEARING` — without
-  cycling the TLS back through its original program (the *direct hand-off*), or
-- restores the original program if the queue is empty or all queued EVs have
-  drifted out of range.
+1. Ordena EVs por `ev.deadline` (EDF).
+2. Se `GW_SPILLBACK=true`: roda `SpillbackDetector.evaluate()` por EV, dispara
+   `request_drain()` em sinais saturados, e monta `tls_to_skip`.
+3. Para cada EV, para cada TLS dentro de `VEHICLE_DISTANCE_TO_TLS`:
+   - Calcula `priority_value` via `PriorityPolicy.compute(ev, distance, current_speed)`.
+   - Chama `GreenWaveManager.request(...)`.
 
-The pending queue is wiped at the end of every `tick()` and refilled by the
-strategy's `request()` calls within the same simulation step. This is the
-freshness guard: an EV that moved out of range simply does not re-request, and
-its queue entry does not reappear next tick.
+O `GreenWaveManager` roda uma **FSM de 3 fases** por alocação:
 
-### `shield` — `SpillbackAwareEDFGreenWaveStrategy` *(planned — Phase A)*
+| Fase | Ação na entrada | Condição de saída |
+|---|---|---|
+| `CLEARING` | Amarelo nos verdes opostos; preserva o estado da via do EV | Espera `TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT` (8 s) |
+| `EV_GREEN` | Verde para a via do EV, vermelho no resto | `vehicle_get_next_tls` indica que o EV passou (event-driven) |
+| `EXIT_YELLOW` | Amarelo nos verdes do EV | Espera 8 s, depois restaura ou faz hand-off |
 
-Wraps `proposto` with a spillback shield. Each tick, for every EV, the strategy
-checks lane occupancy on the EV's first downstream edge after the next TLS. If
-saturated above `SPILLBACK_OCCUPANCY_THRESHOLD`, it skips the EV preempt at the
-current TLS (so cross-traffic can flow) and instead requests a *drain* at the
-TLS controlling the saturated edge's exit — using the same FSM as the EV
-preempt, but with the saturated edge as the priority lane. Drain priority is
-lower than EV preempt (later deadline), so an arriving EV preempts an active
-drain via EDF.
+Conflitos são resolvidos por **arbitragem EDF** (`can_preempt` com `delta` =
+`PREEMPT_DELTA_THRESHOLD` se `GW_ANTIFLICKER` está on, senão 0). Quando uma
+requisição perde a arbitragem para o holder atual, e `GW_PENDING_QUEUE=true`,
+ela entra na **fila de pendentes** (priority-sorted). Ao final do holder, o
+manager:
 
-Full design in [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md) §3.
+- promove a próxima pendente ainda relevante diretamente para `CLEARING`
+  (**hand-off direto**, sem reabrir o programa original), ou
+- restaura o programa original se a fila está vazia ou as pendentes saíram do range.
 
-### `mpc_capacity` — *(planned — Phase B)*
+A fila é limpa ao fim de cada `tick()` e refeita pelas chamadas `request()` da
+strategy no mesmo step (freshness guard).
 
-Linear program over a rolling horizon, same Store-and-Forward base as the
-original MPC plan but with a **downstream-capacity constraint** that bounds
-discharge from each lane by the residual capacity of the lane it feeds into.
-This makes spillback an explicit element of the model rather than a missing
-one. Solver: PuLP + CBC.
+Detalhes finos das diferenças `legacy → greenwave` estão na tabela de
+[`docs/ALGORITHMS.md`](docs/ALGORITHMS.md) §3.
 
-Full design (sketch) in [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md) §4.
-The original pure-S&F MPC formulation in
-[`docs/MPC_PLAN.md`](docs/MPC_PLAN.md) is superseded — read it for shared
-infrastructure (PuLP setup, glossary), not for direction.
+## Tratamento de colisões
 
-## Development
+Independente da estratégia escolhida, o `CollisionManager` global aplica
+**preservação seletiva do EV**:
 
-### Linting
-To check code quality and static typing:
+- SUMO roda com `--collision.action teleport`/`warn` (só registra o evento, não
+  remove participantes).
+- O `CollisionManager` remove **manualmente** apenas os participantes civis,
+  garantindo que EVs continuem na simulação para que a `EmergencyManager` siga
+  funcionando.
+- Métricas exportadas em `tripinfo.csv` / `lanedata.csv`:
+  - `COLLISIONS_INVOLVED` — civis removidos.
+  - `EV_COLLISIONS` — eventos envolvendo um EV.
+  - `COLLISION_STEPS` — número de steps com colisão registrada.
+
+## Cenário de simulação
+
+Próximo do default-puro do SUMO para focar em algoritmos de controle (não
+engenharia de tráfego):
+
+- Car-follow `Krauss` (livre de colisão por construção).
+- Modelo lane-based (sem sublane / `--lateral-resolution`).
+- `randomTrips.py --fringe-factor 10`.
+- vTypes minimais; flags principais: `--time-to-teleport 60`,
+  `--device.bluelight.reactiondist 40`.
+
+## Desenvolvimento
+
+### Lint
 
 ```bash
 uv run ruff check src/sumotraci
-uv run mypy src/sumotraci
 ```
 
-### Configuration
-Configuration is managed via `src/sumotraci/core/config.py` (Pydantic `Settings`).
-Override defaults via environment variables, an `.env` file, or CLI arguments.
+### Configuração
 
-Settings used by `EDFGreenWaveStrategy`:
+Gerenciada via `src/sumotraci/core/config.py` (Pydantic `Settings`). Override
+via variáveis de ambiente, `.env`, ou flags CLI. Principais settings do
+`greenwave`:
 
-| Setting | Default | Meaning |
-|---------|---------|---------|
-| `VEHICLE_DISTANCE_TO_TLS` | 300 | Max distance (m) from EV to TLS that triggers a `request()`; also used to detect when the EV has left a TLS. |
-| `TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT` | 8.0 | Duration (s) of `CLEARING` and `EXIT_YELLOW` waits. |
+| Setting | Default | Significado |
+|---|---|---|
+| `ALGORITHM` | `greenwave` | `baseline`, `greenwave_legacy`, `greenwave`, `mpc`. |
+| `GW_PRIORITY` | `eta` | `deadline` ou `eta`. |
+| `GW_ANTIFLICKER` | `True` | Liga `MIN_EV_GREEN_HOLD` + `PREEMPT_DELTA_THRESHOLD`. |
+| `GW_PENDING_QUEUE` | `True` | Fila de pendentes com hand-off. |
+| `GW_SPILLBACK` | `True` | Detector BFS + drenos. |
+| `VEHICLE_DISTANCE_TO_TLS` | 400 | Distância máx. (m) EV→TLS para gerar `request()`. |
+| `TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT` | 8.0 | Duração (s) das fases `CLEARING` e `EXIT_YELLOW`. |
+| `MIN_EV_GREEN_HOLD` | 5.0 | Lock-out do `EV_GREEN` recém-iniciado (s). |
+| `PREEMPT_DELTA_THRESHOLD` | 2.0 | Delta mínimo no `priority_value` para preemptar. |
+| `SPILLBACK_OCCUPANCY_THRESHOLD` | 0.5 | Ocupação que dispara saturação. |
+| `SPILLBACK_GRAPH_DEPTH` | 1 | Profundidade BFS do detector (1 = só TLS raiz). |
+| `MIN_SPEED_FLOOR_FOR_ETA` | 5.0 | Piso de velocidade (m/s) no cálculo de ETA. |
+| `HIGHLIGHT_ALLOCATIONS` | `True` | Visualização TraCI (faixa + marker no TLS). |
 
-### Project status
+### Status do projeto
 
-- Strategy abstraction (`TrafficControlStrategy` ABC + factory) — **done**.
-- `EDFGreenWaveStrategy` refactor (3-phase FSM, slim public API,
-  pending-queue hand-off) — **done**.
-- `SpillbackAwareEDFGreenWaveStrategy` (Phase A of
-  [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md)) — **planned, next**.
-- `mpc_capacity` (Phase B) — **planned, after Phase A informs the LP design**.
-- Original pure-S&F MPC plan ([`docs/MPC_PLAN.md`](docs/MPC_PLAN.md)) —
-  **superseded**.
+- Refatoração para **3 estratégias + composição por config** — **feito**.
+- `LegacyGreenWaveStrategy` congelada como baseline de comparação — **feito**.
+- `GreenWaveStrategy` (FSM 3-fase, anti-flicker, fila, spillback, viz) — **feito**.
+- `CollisionManager` com preservação seletiva do EV — **feito**.
+- `mpc` (Phase B) — **planejado**.
+
+## Referências
+
+- [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md) — documento canônico: tabela de
+  melhorias `legacy → greenwave`, guia de ablação, mapa de arquivos.
+- [`docs/SPILLBACK_PLAN.md`](docs/SPILLBACK_PLAN.md) — design original do
+  spillback (Phase A) e da Phase B.
+- [`docs/MPC_PLAN.md`](docs/MPC_PLAN.md) — plano original do MPC (Phase B).

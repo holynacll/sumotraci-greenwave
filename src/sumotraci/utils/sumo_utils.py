@@ -94,6 +94,23 @@ def _add_passenger_idm_vehicle_type_to_route_file(root, settings: Settings):
         id="krauss_or_eidm"
         carFollowModel="{settings.CAR_FOLLOW_MODEL}"
         color="yellow"
+        lcStrategic="1.0"
+        lcCooperative="1.0"
+        lcSpeedGain="0.5"
+        lcKeepRight="2.0"
+        lcOvertakeRight="0"
+        lcPushy="0"
+        lcAssertive="0.5"
+        minGap="2.0"
+        minGapLat="0.5"
+        maxSpeedLat="1.0"
+        jmCrossingGap="5"
+        jmIgnoreFoeProb="0"
+        jmIgnoreFoeSpeed="0"
+        jmDriveAfterRedTime="0"
+        jmDriveAfterYellowTime="0"
+        jmStoplineGap="1"
+        jmTimegapMinor="3"
     >
     </vType>
     """)
