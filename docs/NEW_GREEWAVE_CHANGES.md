@@ -25,11 +25,15 @@ Agora:
 
 Arbitragem delegada a uma classe ArbitrationPolicy (por exemplo EDFArbitration com delta).
 
-Anti‑flicker:
+Controle rigoroso por default (GW_EV_PREEMPTION=False): uma vez que um TLS é alocado a um EV, nenhum outro EV o preempta — o desafiante entra na fila e assume só no hand‑off natural.
+
+Preempção concorrente entre EVs (GW_EV_PREEMPTION=True): permite que um EV de maior prioridade preempte, mas SÓ na fase EV_GREEN (CLEARING e EXIT_YELLOW permanecem bloqueados). A transição é sempre graceful — o holder vai para EXIT_YELLOW (amarelo de segurança) e o hand‑off promove o desafiante após o intervalo de segurança, nunca há pulo de volta ao programa base.
+
+Anti‑flicker (GW_ANTIFLICKER, histerese — só tem efeito com GW_EV_PREEMPTION=True):
 
 PREEMPT_DELTA_THRESHOLD – o novo precisa ser ao menos delta segundos melhor no priority_value.
 
-MIN_EV_GREEN_HOLD – o holder fica “travado” no EV_GREEN por N segundos (não pode ser preemptado).
+MIN_EV_GREEN_HOLD – o holder fica “travado” no EV_GREEN por N segundos iniciais (não pode ser preemptado).
 
 A barreira espacial euclidiana foi totalmente removida.
 
@@ -38,11 +42,11 @@ Quando GW_ANTIFLICKER=False, ambos os parâmetros são zerados, virando um EDF p
 4. Fila de espera (pending queue)
 Antes: Perdedor é descartado; precisa ser re‑solicitado no próximo tick.
 
-Agora:
+Agora (intrínseca, sempre ligada — não é mais um toggle):
 
-Quando GW_PENDING_QUEUE=True, perdedores entram em uma fila ordenada por prioridade no próprio holder.
+Perdedores da arbitragem entram em uma fila ordenada por prioridade no próprio holder.
 
-Quando o holder termina (naturalmente ou por preempção), se houver um próximo pendente ainda relevante, a alocação é passada diretamente para ele (hand‑off), sem restaurar o programa original.
+Quando o holder termina (naturalmente ou por preempção graceful), se houver um próximo pendente ainda relevante, a alocação é passada diretamente para ele (hand‑off), sem restaurar o programa original.
 
 A fila é limpa a cada tick (só reaparece quem continuar solicitando), funcionando como um mecanismo de stale‑guard.
 

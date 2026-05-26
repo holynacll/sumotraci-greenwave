@@ -4,13 +4,19 @@ Replaces the former `fsm_greenwave`, `edf_greenwave` and `shield` strategy
 classes. A single engine (`GreenWaveManager`, 3-phase FSM + highlight) whose
 improvements are composed via `Settings`:
 
-  - ``GW_PRIORITY``      — priority policy slot: "deadline" or "eta".
-  - ``GW_ANTIFLICKER``   — toggle: MIN_EV_GREEN_HOLD + PREEMPT_DELTA_THRESHOLD.
-                            When off, both are zeroed (no lock-out, strict EDF).
-  - ``GW_PENDING_QUEUE`` — toggle: queue losers with hand-off vs. drop them.
-  - ``GW_SPILLBACK``     — toggle: BFS spillback detector + drain requests.
+  - ``GW_PRIORITY``       — priority policy slot: "deadline" or "eta".
+  - ``GW_EV_PREEMPTION``  — toggle: allow a higher-priority EV to preempt a TLS
+                            already allocated to another EV (only in EV_GREEN,
+                            graceful). Off = rigorous control (hand-off only).
+  - ``GW_ANTIFLICKER``    — hysteresis on EV-EV preemption (only effective when
+                            GW_EV_PREEMPTION is on): MIN_EV_GREEN_HOLD +
+                            PREEMPT_DELTA_THRESHOLD.
+  - ``GW_SPILLBACK``      — toggle: BFS spillback detector + drain requests.
 
-The 16 combinations cover the full ablation study; see docs/ALGORITHMS.md.
+The pending-allocation queue with hand-off is intrinsic to the engine (always on):
+losers of arbitration queue on the holder and take over at the natural hand-off.
+
+The combinations cover the full ablation study; see docs/ALGORITHMS.md.
 Operational improvements (CollisionManager, scenario defaults) are global and
 apply regardless of which combination is selected.
 """
@@ -55,7 +61,7 @@ class GreenWaveStrategy(TrafficControlStrategy):
             sumo,
             arbitration=EDFArbitration(delta=effective_delta),
             min_ev_green_hold=effective_hold,
-            use_pending_queue=settings.GW_PENDING_QUEUE,
+            ev_preemption=settings.GW_EV_PREEMPTION,
         )
 
         self._detector: Optional[SpillbackDetector] = (

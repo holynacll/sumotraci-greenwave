@@ -17,23 +17,25 @@ class SpillbackSignal:
 
 class SpillbackDetector:
     """
-    Detects saturated outgoing edges in a topological neighbourhood of the EV's
-    immediate-next TLS (the root), expanding via outgoing-edge connectivity in
-    BFS up to ``SPILLBACK_GRAPH_DEPTH`` hops.
+    Detects saturated outgoing edges around the EV's CORRIDOR — the TLSs the EV
+    will cross within ``VEHICLE_DISTANCE_TO_TLS`` — and, optionally, a downstream
+    neighbourhood reached by expanding outgoing-edge connectivity in BFS up to
+    ``SPILLBACK_GRAPH_DEPTH`` hops beyond the corridor.
 
     evaluate(ev_id) returns a list of SpillbackSignal, one per saturated outgoing
-    edge of any TLS visited by the BFS. The strategy issues request_drain() for
-    each, draining bottlenecks before the EV arrives. Signals where saturated_edge
-    equals the EV's own outgoing AT a given TLS carry on_ev_path=True so the
-    strategy can skip the EV preempt only at THAT TLS.
+    edge of any TLS visited. The strategy issues request_drain() for each, draining
+    bottlenecks before the EV arrives. Signals where saturated_edge equals the EV's
+    own outgoing AT a given TLS carry on_ev_path=True so the strategy can skip the
+    EV preempt only at THAT TLS.
 
-    Why BFS instead of "all TLSs on EV's path within X meters":
-      - Local, deterministic neighbourhood independent of EV's path geometry.
-      - Configurable depth gives a clear knob (depth=1: root only; depth=2: also
-        1-hop neighbours; etc.) instead of a meters-based heuristic.
+    Why seed with the whole corridor (not a single root):
+      - The green wave preempts every TLS on the EV's path within range, so each of
+        those TLSs is a place where a saturated transversal can block the EV. The
+        spillback must cover the same horizon, not just the first crossing.
+      - ``SPILLBACK_GRAPH_DEPTH`` then controls how far the BFS expands BEYOND the
+        corridor (depth=1: corridor only; depth=2: + 1 hop downstream; etc.).
       - Depth ≥ 2 detects cascading spillback (a saturated outgoing whose own
-        downstream is also blocked), which the previous path+distance approach
-        missed.
+        downstream is also blocked), which a single-TLS scan misses.
 
     Caches are keyed by TLS / edge and built lazily; topology is assumed stable
     over the simulation lifetime.
@@ -47,14 +49,14 @@ class SpillbackDetector:
         self._edge_to_controlling_tls: Optional[Dict[str, str]] = None
 
     def evaluate(self, ev_id: str) -> List[SpillbackSignal]:
-        root_tls_id = self._root_tls(ev_id)
-        if root_tls_id is None:
+        corridor = self._corridor_tls(ev_id)
+        if not corridor:
             return []
 
         signals: List[SpillbackSignal] = []
         seen_outgoings: set = set()
-        visited_tls: set = {root_tls_id}
-        frontier: List[str] = [root_tls_id]
+        visited_tls: set = set(corridor)
+        frontier: List[str] = list(corridor)
 
         for _ in range(max(1, self.settings.SPILLBACK_GRAPH_DEPTH)):
             next_frontier: List[str] = []
@@ -90,15 +92,19 @@ class SpillbackDetector:
                 break
         return signals
 
-    def _root_tls(self, ev_id: str) -> Optional[str]:
+    def _corridor_tls(self, ev_id: str) -> List[str]:
+        """The EV's corridor: every TLS on its path within VEHICLE_DISTANCE_TO_TLS,
+        in order. These seed the BFS so the spillback covers the same horizon the
+        green wave preempts, not just the first crossing."""
         try:
             next_tls_list = self.sumo.vehicle_get_next_tls(ev_id)
         except self.sumo.TraCIException:
-            return None
-        for entry in next_tls_list:
-            if entry[2] <= self.settings.VEHICLE_DISTANCE_TO_TLS:
-                return entry[0]
-        return None
+            return []
+        return [
+            entry[0]
+            for entry in next_tls_list
+            if entry[2] <= self.settings.VEHICLE_DISTANCE_TO_TLS
+        ]
 
     # -------- helpers --------
 

@@ -10,16 +10,16 @@ O projeto evoluiu de uma comparação binária (Green Wave vs. baseline padrão 
 
 # Composição por configuração (GW_*)
 
-A grande virada da refatoração: a estratégia greenwave é parametrizada por quatro chaves no Settings, eliminando a explosão de classes anterior (uma por combinação de melhoria) e permitindo ablação direta via .env:
+A grande virada da refatoração: a estratégia greenwave é parametrizada por chaves no Settings, eliminando a explosão de classes anterior (uma por combinação de melhoria) e permitindo ablação direta via .env:
 
-|      Config      |    Tipo     |    Valores     |                                 Função                                  |
-|------------------|-------------|----------------|-------------------------------------------------------------------------|
-| GW_PRIORITY      | policy slot | deadline \| eta | Métrica de arbitragem (sempre exatamente uma)                           |
-| GW_ANTIFLICKER   | toggle      | true \| false   | Liga MIN_EV_GREEN_HOLD (lock-out) e PREEMPT_DELTA_THRESHOLD (histerese) |
-| GW_PENDING_QUEUE | toggle      | true \| false   | Liga a fila de pendentes com hand-off direto                            |
-| GW_SPILLBACK     | toggle      | true \| false   | Liga o detector BFS e o mecanismo de drenos                             |
+|      Config       |    Tipo     |    Valores     |                                 Função                                  |
+|-------------------|-------------|----------------|-------------------------------------------------------------------------|
+| GW_PRIORITY       | policy slot | deadline \| eta | Métrica de arbitragem (sempre exatamente uma)                           |
+| GW_EV_PREEMPTION  | toggle      | true \| false   | Preempção concorrente entre EVs (só em EV_GREEN, graceful). Off = controle rigoroso |
+| GW_ANTIFLICKER    | toggle      | true \| false   | Histerese sobre a preempção EV-EV (MIN_EV_GREEN_HOLD + PREEMPT_DELTA_THRESHOLD); só atua com GW_EV_PREEMPTION=true |
+| GW_SPILLBACK      | toggle      | true \| false   | Liga o detector BFS e o mecanismo de drenos                             |
 
-São 16 combinações (2×2×2×2), todas válidas e construíveis sem alteração de código. Cada experimento de ablação corresponde a um .env distinto. Os defaults (GW_PRIORITY=eta, todos os toggles true) reproduzem a configuração de melhor desempenho.
+A fila de pendentes com hand-off direto é intrínseca ao engine (sempre ligada), não mais um toggle. Como GW_ANTIFLICKER só tem efeito com GW_EV_PREEMPTION=true, são 12 combinações distintas (4 com preempção off + 8 com preempção on), todas construíveis via .env. O default é controle rigoroso: GW_PRIORITY=eta, GW_EV_PREEMPTION=false, GW_SPILLBACK=false — nenhum EV preempta uma alocação em progresso.
 
 # Arquitetura e código
 
@@ -58,24 +58,28 @@ Cada alocação no GreenWaveManager (uma alocação = um requerente segurando pr
 2. **EV_GREEN** — verde para a via do EV, vermelho no resto; saída é event-driven: a cada tick verifica via vehicle_get_next_tls se o EV ainda está dentro de VEHICLE_DISTANCE_TO_TLS do TLS. Quando o EV passa, transita para EXIT_YELLOW.
 3. **EXIT_YELLOW** — amarelo nas faixas que estavam verdes para o EV; espera TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT segundos; depois restaura o programa original do TLS ou faz hand-off direto para o próximo requerente pendente, sem reabrir o programa original.
 
-# Arbitragem, anti-flicker e fila de pendentes
+# Arbitragem, preempção EV-EV e fila de pendentes
 
-Quando dois EVs disputam o mesmo TLS:
+Quando dois EVs disputam o mesmo TLS, o engine opera por default em **controle rigoroso**: uma vez alocado a um EV, o TLS não é preemptado por outro. O perdedor da arbitragem entra na fila e assume no hand-off natural. `GW_EV_PREEMPTION=true` abre uma exceção controlada.
 
-- **Arbitragem EDF** (EDFArbitration.can_preempt): o novo requerente vence se new_priority + PREEMPT_DELTA_THRESHOLD ≤ existing_priority. Menor priority_value = mais urgente.
-- **Anti-flicker em duas camadas** (ativo se GW_ANTIFLICKER=true):
-  - **Lock-out** (MIN_EV_GREEN_HOLD): durante os primeiros N segundos da fase EV_GREEN, o holder é não-preemptável — qualquer requisição, mesmo mais urgente, é enfileirada ou descartada. Aplicável apenas em EV_GREEN; em CLEARING e EXIT_YELLOW o lock-out não atua.
-  - **Histerese** (PREEMPT_DELTA_THRESHOLD): exige que o novo requerente seja pelo menos delta mais urgente que o holder, evitando trocas instáveis em pequenas variações de ETA. Atua em todas as fases.
-- **Fila de pendentes** (ativa se GW_PENDING_QUEUE=true): requerentes que perderam a arbitragem entram na fila do holder, ordenada por prioridade. Quando o holder termina naturalmente, o próximo da fila é promovido diretamente para CLEARING (hand-off direto), sem reabrir o programa original do TLS — economiza o round-trip de setProgram e mantém a continuidade da preempção. A fila é re-snapshotada a cada tick a partir das chamadas request() da strategy, garantindo freshness (EVs que saíram do range não reaparecem na fila).
+- **Fila de pendentes** (intrínseca, sempre ligada): requerentes que perderam a arbitragem entram na fila do holder, ordenada por prioridade. Quando o holder termina naturalmente, o próximo da fila é promovido diretamente para CLEARING (hand-off direto), sem reabrir o programa original do TLS — economiza o round-trip de setProgram e mantém a continuidade da preempção. A fila é re-snapshotada a cada tick a partir das chamadas request() da strategy, garantindo freshness (EVs que saíram do range não reaparecem na fila).
+- **Preempção concorrente entre EVs** (GW_EV_PREEMPTION): só permite preemptar o holder na fase **EV_GREEN** — em CLEARING e EXIT_YELLOW o holder permanece bloqueado (o desafiante apenas enfileira). Quando ocorre, a transição é **graceful**: o holder é levado a EXIT_YELLOW (amarelo de segurança) e o hand-off natural promove o desafiante de maior prioridade após o intervalo de segurança — nunca há pulo de volta ao programa base (invariante de segurança *nunca verde→verde sem amarelo*).
+- **Arbitragem EDF** (EDFArbitration.can_preempt): o desafiante vence se new_priority + PREEMPT_DELTA_THRESHOLD ≤ existing_priority. Menor priority_value = mais urgente.
+- **Anti-flicker** (GW_ANTIFLICKER, histerese — só tem efeito com GW_EV_PREEMPTION=true): MIN_EV_GREEN_HOLD protege os primeiros N segundos da fase EV_GREEN contra preempção; PREEMPT_DELTA_THRESHOLD exige que o desafiante seja pelo menos delta mais urgente, evitando trocas instáveis em pequenas variações de ETA. Quando off, ambos são zerados (preempta desde o início do EV_GREEN, com margem estrita).
+- **Drenos** (GW_SPILLBACK): independentes de GW_EV_PREEMPTION — qualquer EV preempta um dreno imediatamente.
 
 # Spillback (GW_SPILLBACK)
 
-O SpillbackDetector aplica BFS por profundidade (SPILLBACK_GRAPH_DEPTH) a partir do TLS imediatamente à frente do EV. Para cada vértice visitado, verifica a ocupação das faixas via lane_get_last_step_occupancy e classifica como saturada se ultrapassa SPILLBACK_OCCUPANCY_THRESHOLD. Em caso de saturação na saída do TLS-raiz, duas ações concorrentes:
+O SpillbackDetector é semeado pelo **corredor do EV** — todos os TLSs na rota dentro de VEHICLE_DISTANCE_TO_TLS — e opcionalmente expande BFS por SPILLBACK_GRAPH_DEPTH saltos a jusante do corredor. Para cada vértice visitado, verifica a ocupação das saídas via lane_get_last_step_occupancy e classifica como saturada se ultrapassa SPILLBACK_OCCUPANCY_THRESHOLD. Em cada saída saturada:
 
-- A preempção do EV no TLS-raiz é suprimida (não-óbvio: não basta drenar — abrir verde para um EV em direção a uma via já lotada só piora o spillback);
-- Um pedido de dreno (request_drain) é registrado no TLS que controla a saída saturada, abrindo verde para essa via até a ocupação cair abaixo de SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD (histerese), ou até atingir o teto de segurança DRAIN_MAX_DURATION.
+- Um pedido de dreno (request_drain) é registrado no TLS **a jusante** da via saturada (o que controla a saída dela), abrindo verde para escoá-la até a ocupação cair abaixo de SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD (histerese), ou até atingir o teto de segurança DRAIN_MAX_DURATION. Isso escoa o pulso despejado pelo green wave e desafoga as transversais que o EV não usa mas que, saturadas, bloqueariam o cruzamento dele (junction blocking).
+- Se a saída saturada for a **própria saída do EV** naquele TLS (on_ev_path), a preempção do EV ali é suprimida (não-óbvio: não basta drenar — abrir verde para o EV rumo a uma via já lotada só piora o spillback).
 
-Drenos têm prioridade fixa (DRAIN_PRIORITY_VALUE) e não recebem lock-out — qualquer EV preempta um dreno imediatamente.
+A profundidade governa a cascata: depth=1 cobre só o corredor; depth≥2 também abre os TLSs a jusante de uma saída cuja própria saída seguinte está cheia, criando um corredor de vazão contínuo em vez de só empurrar o engarrafamento um quarteirão adiante.
+
+Anti-flapping: se um dreno termina pelo teto DRAIN_MAX_DURATION sem ter esvaziado a via (via cronicamente saturada), aplica-se um cooldown (DRAIN_COOLDOWN) que bloqueia um novo dreno naquele TLS por um tempo — evitando o liga-desliga amarelo↔verde e cedendo verde às outras aproximações. Drenos que esvaziaram a via (saída por histerese de ocupação) não sofrem cooldown.
+
+Drenos não competem com EVs por valor numérico: a precedência é estrutural (qualquer EV preempta um dreno; um dreno nunca preempta um EV) e independe de DRAIN_PRIORITY_VALUE e da policy GW_PRIORITY. Entre si, os drenos resolvem por FCFS + fila.
 
 # Tratamento de colisões (global, vale para todas as estratégias)
 

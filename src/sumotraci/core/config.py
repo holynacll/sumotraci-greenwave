@@ -14,7 +14,7 @@ _VALID_GW_PRIORITY = {"deadline", "eta"}
 
 class Settings(BaseSettings):
     # Simulation Parameters
-    SEED: int = 217492
+    SEED: int = 217492  # 1145661099  # 217492
     SEEDS: list[int] = [
         428956419,
         1954324947,
@@ -45,13 +45,30 @@ class Settings(BaseSettings):
     # 'greenwave' composition. Defaults reproduce the former 'shield' algorithm.
     #   GW_PRIORITY: priority policy slot — "deadline" (raw mission deadline) or
     #               "eta" (ETA at TLS + severity penalty). Exactly one is active.
-    #   GW_ANTIFLICKER: toggle MIN_EV_GREEN_HOLD + PREEMPT_DELTA_THRESHOLD.
-    #   GW_PENDING_QUEUE: toggle the pending-allocation queue with hand-off.
-    #   GW_SPILLBACK: toggle the BFS spillback detector + drain mechanism.
+    #   GW_EV_PREEMPTION: allow a later, higher-priority EV to preempt a TLS that
+    #               is already allocated to another EV. OFF by default — rigorous
+    #               control: once allocated, a challenger EV queues and takes over
+    #               only at the natural hand-off. When ON, preemption is allowed
+    #               ONLY while the holder is in EV_GREEN (CLEARING and EXIT_YELLOW
+    #               stay locked) and the transition is always graceful (holder ->
+    #               EXIT_YELLOW -> hand-off, never a jump back to the base program).
+    #   GW_ANTIFLICKER: hysteresis on EV-EV preemption — only has effect when
+    #               GW_EV_PREEMPTION is on. Toggles MIN_EV_GREEN_HOLD (protect the
+    #               first N seconds of EV_GREEN) + PREEMPT_DELTA_THRESHOLD (require
+    #               a minimum priority margin to preempt).
+    #   GW_SPILLBACK: toggle the BFS spillback detector + drain mechanism. Drains
+    #               are independent of GW_EV_PREEMPTION (any EV preempts a drain).
+    #   GW_FAST_HANDOFF: on hand-off, promote the successor straight to EV_GREEN
+    #               instead of re-running CLEARING. The predecessor's EXIT_YELLOW
+    #               already served as the inter-green clearance, so CLEARING would
+    #               just double-count it. Off by default (conservative).
+    # The pending-allocation queue with hand-off is intrinsic (always on): losers
+    # of arbitration queue on the holder and take over at the natural hand-off.
     GW_PRIORITY: str = "eta"
-    GW_ANTIFLICKER: bool = True
-    GW_PENDING_QUEUE: bool = True
+    GW_EV_PREEMPTION: bool = False
+    GW_ANTIFLICKER: bool = False
     GW_SPILLBACK: bool = True
+    GW_FAST_HANDOFF: bool = False
 
     # Traffic Management
     SAFE_GUARD_PROPORTION_FOR_COMPLETION_GWA: float = 0.8
@@ -68,12 +85,19 @@ class Settings(BaseSettings):
     MAX_STOP_DURATION: int = 10
 
     # Spillback shield (Phase A)
-    SPILLBACK_OCCUPANCY_THRESHOLD: float = 0.5  # detect saturation
-    SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD: float = 0.2  # hysteresis release
-    DRAIN_MAX_DURATION: float = 30.0  # safety cap (s) for a single drain
-    # BFS depth from EV's immediate-next TLS (root). 1 = only root scanned;
-    # 2 = root + 1-hop neighbors via outgoing edges; 3 = +2-hop; etc.
-    # In a 5x5 grid: depth=2 covers ~5 TLSs, depth=3 covers ~17.
+    SPILLBACK_OCCUPANCY_THRESHOLD: float = 0.7  # detect saturation
+    SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD: float = 0.4  # hysteresis release
+    DRAIN_MAX_DURATION: float = 20.0  # safety cap (s) for a single drain
+    # After a drain ends by hitting DRAIN_MAX_DURATION WITHOUT clearing its edge
+    # (occupancy never fell below the release threshold), block a new drain at that
+    # TLS for this long. Prevents drain flapping (yellow↔green) on a chronically
+    # saturated lane and gives the other approaches green time. A drain that ended
+    # "healthy" (occupancy fell below the release threshold) is NOT cooled down.
+    DRAIN_COOLDOWN: float = 20.0
+    # BFS depth measured from the EV's CORRIDOR (all TLSs on its path within
+    # VEHICLE_DISTANCE_TO_TLS, which seed the search). 1 = scan the corridor only;
+    # 2 = corridor + 1-hop downstream via outgoing edges (catches cascading
+    # spillback); 3 = +2-hop; etc.
     SPILLBACK_GRAPH_DEPTH: int = 1
 
     # ETA-based priority (Phase A++ / 2026-05-08)

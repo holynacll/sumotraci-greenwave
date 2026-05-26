@@ -9,9 +9,9 @@ emergência (EV) sobre SUMO + TraCI. O codebase foi refatorado em torno de
   ponto de comparação (FSM 4-status, deadline puro, sem fila/anti-flicker/spillback,
   *safeguard* euclidiano de 0.8).
 - **`greenwave`** — engine único refatorado. As melhorias são **compostas por
-  configuração** (toggles `GW_*`), gerando 16 combinações sem explosão de classes
-  (FSM 3-fase, prioridade plugável, anti-flicker, fila de pendentes, spillback BFS,
-  visualização).
+  configuração** (toggles `GW_*`) sem explosão de classes (FSM 3-fase, prioridade
+  plugável, preempção EV-EV graceful, anti-flicker, fila de pendentes intrínseca,
+  spillback BFS, visualização).
 - **`mpc`** — Phase B, não implementada (`NotImplementedError`).
 
 A documentação canônica das estratégias, da composição e do guia de ablação está
@@ -43,6 +43,7 @@ Construído com arquitetura modular, Pydantic settings, e tooling moderno (`uv`,
 
 ```bash
 export SUMO_HOME=/path/to/your/sumo
+export SUMO_HOME=$(pwd)/.venv/lib/python3.11/site-packages/sumo
 ```
 
 ### 2. Rodar a simulação
@@ -68,25 +69,28 @@ ambiente — não há flag CLI dedicada para cada toggle.
 | Config | Tipo | Valores | Papel |
 |---|---|---|---|
 | `GW_PRIORITY` | *policy slot* | `deadline` \| `eta` | Cálculo do `priority_value` (sempre exatamente um). |
-| `GW_ANTIFLICKER` | toggle | `true` \| `false` | Liga `MIN_EV_GREEN_HOLD` + `PREEMPT_DELTA_THRESHOLD`. |
-| `GW_PENDING_QUEUE` | toggle | `true` \| `false` | Fila de alocações pendentes com hand-off. |
+| `GW_EV_PREEMPTION` | toggle | `true` \| `false` | Permite que um EV de maior prioridade preempte um TLS já alocado a outro EV (só em `EV_GREEN`, transição *graceful*). **Off por default** (controle rigoroso). |
+| `GW_ANTIFLICKER` | toggle | `true` \| `false` | Histerese sobre a preempção EV-EV (`MIN_EV_GREEN_HOLD` + `PREEMPT_DELTA_THRESHOLD`). Só tem efeito com `GW_EV_PREEMPTION=true`. |
 | `GW_SPILLBACK` | toggle | `true` \| `false` | Detector BFS + drenos em saídas saturadas. |
 
-São **16 combinações** (2×2×2×2). Os defaults (`GW_PRIORITY=eta`, todos os
-toggles `true`) reproduzem o antigo algoritmo `shield`.
+A **fila de pendentes com hand-off é intrínseca** (sempre ligada). Por default o
+`greenwave` opera em **controle rigoroso**: `GW_PRIORITY=eta`,
+`GW_EV_PREEMPTION=false`, `GW_SPILLBACK=false` — nenhum EV preempta uma alocação
+em progresso (a sucessão é só por hand-off natural).
 
 Exemplos de `.env` para o estudo de ablação:
 
 ```bash
-# EDF puro (sem nenhuma melhoria além da FSM 3-fase)
+# Controle rigoroso com EDF puro (sem preempção concorrente entre EVs)
 ALGORITHM=greenwave
 GW_PRIORITY=deadline
-GW_ANTIFLICKER=false
-GW_PENDING_QUEUE=false
+GW_EV_PREEMPTION=false
 GW_SPILLBACK=false
 
-# Greenwave completo (≡ antigo 'shield')
+# Preempção EV-EV graceful + spillback (≈ antigo 'shield')
 ALGORITHM=greenwave
+GW_EV_PREEMPTION=true
+GW_SPILLBACK=true
 ```
 
 A tabela completa de experimentos está em [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md) §4.
@@ -158,11 +162,10 @@ O `GreenWaveManager` roda uma **FSM de 3 fases** por alocação:
 | `EV_GREEN` | Verde para a via do EV, vermelho no resto | `vehicle_get_next_tls` indica que o EV passou (event-driven) |
 | `EXIT_YELLOW` | Amarelo nos verdes do EV | Espera 8 s, depois restaura ou faz hand-off |
 
-Conflitos são resolvidos por **arbitragem EDF** (`can_preempt` com `delta` =
-`PREEMPT_DELTA_THRESHOLD` se `GW_ANTIFLICKER` está on, senão 0). Quando uma
-requisição perde a arbitragem para o holder atual, e `GW_PENDING_QUEUE=true`,
-ela entra na **fila de pendentes** (priority-sorted). Ao final do holder, o
-manager:
+Por default o engine opera em **controle rigoroso**: uma vez que um TLS é alocado
+a um EV, nenhum outro EV o preempta. Quem perde a arbitragem entra na **fila de
+pendentes** (priority-sorted, intrínseca) e assume no **hand-off natural** ao fim
+do holder. Ao final do holder, o manager:
 
 - promove a próxima pendente ainda relevante diretamente para `CLEARING`
   (**hand-off direto**, sem reabrir o programa original), ou
@@ -170,6 +173,14 @@ manager:
 
 A fila é limpa ao fim de cada `tick()` e refeita pelas chamadas `request()` da
 strategy no mesmo step (freshness guard).
+
+Com `GW_EV_PREEMPTION=true`, abre-se uma exceção: um EV de maior prioridade pode
+preemptar o holder — **mas só na fase `EV_GREEN`** (`CLEARING` e `EXIT_YELLOW`
+permanecem bloqueados). A preempção é sempre **graceful**: o holder vai para
+`EXIT_YELLOW` (amarelo de segurança) e o hand-off promove o desafiante após o
+intervalo de segurança — nunca há pulo de volta ao programa base. A arbitragem
+usa `can_preempt` (EDF) com `delta` = `PREEMPT_DELTA_THRESHOLD` e a janela inicial
+`MIN_EV_GREEN_HOLD` quando `GW_ANTIFLICKER` está on; ambos zerados quando off.
 
 Detalhes finos das diferenças `legacy → greenwave` estão na tabela de
 [`docs/ALGORITHMS.md`](docs/ALGORITHMS.md) §3.
@@ -218,9 +229,9 @@ via variáveis de ambiente, `.env`, ou flags CLI. Principais settings do
 |---|---|---|
 | `ALGORITHM` | `greenwave` | `baseline`, `greenwave_legacy`, `greenwave`, `mpc`. |
 | `GW_PRIORITY` | `eta` | `deadline` ou `eta`. |
-| `GW_ANTIFLICKER` | `True` | Liga `MIN_EV_GREEN_HOLD` + `PREEMPT_DELTA_THRESHOLD`. |
-| `GW_PENDING_QUEUE` | `True` | Fila de pendentes com hand-off. |
-| `GW_SPILLBACK` | `True` | Detector BFS + drenos. |
+| `GW_EV_PREEMPTION` | `False` | Preempção concorrente entre EVs (só em `EV_GREEN`, graceful). Off = controle rigoroso. |
+| `GW_ANTIFLICKER` | `True` | Histerese sobre a preempção EV-EV (`MIN_EV_GREEN_HOLD` + `PREEMPT_DELTA_THRESHOLD`); só atua com `GW_EV_PREEMPTION=true`. |
+| `GW_SPILLBACK` | `False` | Detector BFS + drenos. |
 | `VEHICLE_DISTANCE_TO_TLS` | 400 | Distância máx. (m) EV→TLS para gerar `request()`. |
 | `TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT` | 8.0 | Duração (s) das fases `CLEARING` e `EXIT_YELLOW`. |
 | `MIN_EV_GREEN_HOLD` | 5.0 | Lock-out do `EV_GREEN` recém-iniciado (s). |

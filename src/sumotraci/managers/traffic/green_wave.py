@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from ...core.config import Settings
 from ...core.sumo_interface import SumoInterface
@@ -42,6 +42,9 @@ class _Allocation:
     wait_until: Optional[float]     # absolute sim time; None means event-driven exit
     # set when entering EV_GREEN; used for anti-flicker hold and drain timeout
     ev_green_started_at: Optional[float] = None
+    # drain only: True if it left EV_GREEN by hitting DRAIN_MAX_DURATION without
+    # clearing the edge. Triggers the post-cap cooldown on restore.
+    ended_by_cap: bool = False
     pending: List[_PendingRequest] = field(default_factory=list)  # priority-sorted waiters
     highlight_polygon_ids: List[str] = field(default_factory=list)  # SUMO polygon IDs for visual overlay
 
@@ -74,12 +77,27 @@ class GreenWaveManager:
     For EVs the event-driven exit checks vehicle_get_next_tls; for drains it checks lane
     occupancy with hysteresis.
 
-    Arbitration is ETA-based (smaller `priority_value` wins). Two anti-flicker mechanisms:
-      * MIN_EV_GREEN_HOLD: an EV holder is non-preemptable for the first N seconds
-        after entering EV_GREEN. Drain holders are NOT subject to this lock-out
-        (any EV preempts a drain immediately).
-      * PREEMPT_DELTA_THRESHOLD: a new requester must be at least delta seconds
-        better in priority_value to displace the holder; otherwise it queues.
+    Arbitration is ETA-based (smaller `priority_value` wins).
+
+    Concurrent EV-EV preemption is OFF by default (rigorous control): once a TLS
+    is allocated to an EV, no other EV preempts it — challengers queue and take
+    over only at the natural hand-off. Enabling it (ev_preemption / GW_EV_PREEMPTION)
+    lets a higher-priority EV preempt, but ONLY while the holder is in EV_GREEN;
+    CLEARING and EXIT_YELLOW stay locked. The preemption is always graceful: the
+    holder is moved to EXIT_YELLOW (safety yellow on the outgoing greens) and the
+    natural hand-off promotes the challenger — never a jump back to the base program.
+
+    Anti-flicker (GW_ANTIFLICKER) only refines that EV_GREEN window, and only when
+    preemption is enabled; it has no effect otherwise:
+      * MIN_EV_GREEN_HOLD: protect the first N seconds of EV_GREEN from preemption.
+      * PREEMPT_DELTA_THRESHOLD: a challenger must be at least delta better in
+        priority_value to preempt; otherwise it queues.
+
+    Drains (GW_SPILLBACK) sit below EVs by a STRUCTURAL rule, not by priority_value
+    (the two scales are incomparable and flip across GW_PRIORITY policies): an EV
+    always preempts a drain holder (graceful), and a drain never preempts an EV
+    holder (it queues). This is decided by class in request(), independent of
+    GW_EV_PREEMPTION. Drains arbitrate among themselves by FCFS + queue.
 
     Pending queue: when a request loses arbitration to the current holder, it joins
     the holder's pending list (priority-sorted). On natural finish the next pending
@@ -94,7 +112,7 @@ class GreenWaveManager:
         sumo: SumoInterface,
         arbitration: Optional[ArbitrationPolicy] = None,
         min_ev_green_hold: Optional[float] = None,
-        use_pending_queue: bool = True,
+        ev_preemption: bool = False,
     ):
         self.settings = settings
         self.sumo = sumo
@@ -108,12 +126,18 @@ class GreenWaveManager:
             if min_ev_green_hold is not None
             else settings.MIN_EV_GREEN_HOLD
         )
-        # When False, requests that lose arbitration are dropped instead of
-        # queued; the strategy re-requests next tick. With the queue empty,
-        # tick()/_handoff_or_restore() naturally degenerate to plain restore.
-        self._use_pending_queue: bool = use_pending_queue
+        # Concurrent EV-EV preemption. When False (default), a holder with an
+        # allocation in progress is never preempted by another EV — challengers
+        # queue and take over at the natural hand-off. When True, a higher-priority
+        # EV may preempt, but only while the holder is in EV_GREEN (see
+        # _holder_is_locked). The strategy passes GW_EV_PREEMPTION.
+        self._ev_preemption: bool = ev_preemption
         self._allocations: List[_Allocation] = []
         self._highlight_counter: int = 0
+        # tls_id -> sim time until which a new drain at that TLS is blocked. Set
+        # when a drain ends by hitting the safety cap without clearing its edge;
+        # prevents drain flapping on a chronically saturated lane.
+        self._drain_cooldown_until: Dict[str, float] = {}
 
     # -------- public API --------
 
@@ -140,19 +164,49 @@ class GreenWaveManager:
                 # Idempotent: refresh the priority_value so dynamic ETA is reflected.
                 existing.priority_value = priority_value
                 return True
+
+            holder_is_drain = existing.requester_id.startswith("drain:")
+            requester_is_drain = requester_id.startswith("drain:")
+
+            # EV-vs-drain precedence is STRUCTURAL, decided by class — never by
+            # priority_value. The two live on incomparable scales (an EV's value is
+            # an ETA/deadline; a drain's is the fixed DRAIN_PRIORITY_VALUE), and the
+            # ordering even flips between GW_PRIORITY policies. So resolve the cross
+            # class cases by rule, before any can_preempt comparison:
+            #   - a drain NEVER preempts an EV holder — it queues;
+            #   - an EV ALWAYS preempts a drain holder — graceful hand-off.
+            if not holder_is_drain and requester_is_drain:
+                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                return True
+            if holder_is_drain and not requester_is_drain:
+                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                # End the drain's green so the EV takes over at the natural hand-off.
+                # Guard against re-triggering once it is already in EXIT_YELLOW: the
+                # strategy re-requests this TLS every tick while the EV is in range,
+                # and a fresh _enter_exit_yellow would keep pushing wait_until forward,
+                # freezing the lane on yellow forever.
+                if existing.phase != Phase.EXIT_YELLOW:
+                    self._enter_exit_yellow(existing, self.sumo.get_time())
+                return True
+
+            # Same class (EV vs EV, or drain vs drain): arbitrate by priority_value.
             if self._holder_is_locked(existing):
-                if self._use_pending_queue:
-                    self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
                 return True
             if not self.arbitration.can_preempt(existing.priority_value, priority_value):
-                if self._use_pending_queue:
-                    self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
                 return True
-            # Preempt: tear down the holder and fall through to install the new one.
-            # The displaced holder's pending list is discarded — the strategy will
-            # refill it within this same tick (it iterates EVs in EDF order).
-            self._restore(existing)
-            self._allocations.remove(existing)
+            # Graceful preemption. Only reachable with EV-EV preemption enabled and
+            # the holder in EV_GREEN past the anti-flicker hold. Never tear the
+            # holder down nor revert the base program: queue the challenger and end
+            # the holder's green by moving it to EXIT_YELLOW (safety yellow on the
+            # outgoing greens). The natural hand-off at the end of EXIT_YELLOW
+            # promotes the highest-priority pending requester. Guard as above so a
+            # per-tick re-request never resets wait_until once in EXIT_YELLOW.
+            self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+            if existing.phase != Phase.EXIT_YELLOW:
+                self._enter_exit_yellow(existing, self.sumo.get_time())
+            return True
 
         try:
             controlled_lanes = self.sumo.trafficlight_get_controlled_lanes(tls_id)
@@ -176,7 +230,15 @@ class GreenWaveManager:
         return True
 
     def request_drain(self, tls_id: str, saturated_edge: str) -> bool:
-        """Request green for saturated_edge to drain a spillback bottleneck."""
+        """Request green for saturated_edge to drain a spillback bottleneck.
+
+        Refused (returns False) while the TLS is in post-cap cooldown — a drain
+        there just hit DRAIN_MAX_DURATION without clearing, so we hold off to
+        avoid flapping and give the other approaches green time.
+        """
+        until = self._drain_cooldown_until.get(tls_id)
+        if until is not None and self.sumo.get_time() < until:
+            return False
         return self.request(
             tls_id=tls_id,
             requester_id=f"drain:{saturated_edge}",
@@ -197,6 +259,8 @@ class GreenWaveManager:
                 if alloc.phase == Phase.CLEARING:
                     self._enter_ev_green(alloc, now)
                 elif alloc.phase == Phase.EV_GREEN:
+                    if alloc.requester_id.startswith("drain:") and self._drain_capped(alloc, now):
+                        alloc.ended_by_cap = True
                     self._enter_exit_yellow(alloc, now)
                 elif alloc.phase == Phase.EXIT_YELLOW:
                     replacement = self._handoff_or_restore(alloc)
@@ -269,14 +333,25 @@ class GreenWaveManager:
     # -------- handoff & queue --------
 
     def _holder_is_locked(self, holder: _Allocation) -> bool:
-        """True if the holder is in the EV_GREEN anti-flicker hold window.
+        """True if the holder must not be preempted right now.
 
-        Drain holders are NOT locked — any EV preempts a drain immediately.
+        Only consulted for same-class arbitration (EV-vs-EV or drain-vs-drain);
+        the EV-vs-drain precedence is resolved structurally in request() before
+        this is reached. Drain holders are never locked (drain-vs-drain reduces
+        to FCFS + queue via the priority_value tie).
+
+        For EV holders: with EV-EV preemption disabled, the holder is locked in
+        every phase (rigorous control — challengers wait for the natural
+        hand-off). With it enabled, only EV_GREEN is preemptable; CLEARING and
+        EXIT_YELLOW stay locked. Within EV_GREEN the anti-flicker hold protects
+        the first MIN_EV_GREEN_HOLD seconds (0 when GW_ANTIFLICKER is off).
         """
         if holder.requester_id.startswith("drain:"):
             return False
+        if not self._ev_preemption:
+            return True
         if holder.phase != Phase.EV_GREEN or holder.ev_green_started_at is None:
-            return False
+            return True
         return (self.sumo.get_time() - holder.ev_green_started_at) < self._min_ev_green_hold
 
     def _enqueue(
@@ -367,12 +442,15 @@ class GreenWaveManager:
             return self._drain_done(alloc, now)
         return self._ev_has_passed(alloc)
 
-    def _drain_done(self, alloc: _Allocation, now: float) -> bool:
-        # Safety cap: drain has been active too long regardless of occupancy.
-        if (
+    def _drain_capped(self, alloc: _Allocation, now: float) -> bool:
+        """Drain has been active for the full safety cap, regardless of occupancy."""
+        return (
             alloc.ev_green_started_at is not None
             and now - alloc.ev_green_started_at >= self.settings.DRAIN_MAX_DURATION
-        ):
+        )
+
+    def _drain_done(self, alloc: _Allocation, now: float) -> bool:
+        if self._drain_capped(alloc, now):
             return True
         # Hysteresis: occupancy fell below the release threshold.
         return self._max_lane_occupancy(alloc.priority_edge) < self.settings.SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD
@@ -402,6 +480,12 @@ class GreenWaveManager:
     def _restore(self, alloc: _Allocation) -> None:
         """Restore TLS to its original program. Caller drops the alloc from the list."""
         self._clear_highlight(alloc)
+        # A drain that gave up at the safety cap (edge never cleared) starts a
+        # cooldown so it does not immediately re-fire and flap on a saturated lane.
+        if alloc.requester_id.startswith("drain:") and alloc.ended_by_cap:
+            self._drain_cooldown_until[alloc.tls_id] = (
+                self.sumo.get_time() + self.settings.DRAIN_COOLDOWN
+            )
         try:
             self.sumo.trafficlight_set_program(alloc.tls_id, alloc.original_program)
         except self.sumo.TraCIException:
