@@ -1,23 +1,22 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
 
-from ...core.config import Settings
-from ...core.sumo_interface import SumoInterface
-from ...domain.enums import SeverityEnum
-from ...domain.schemas import GreenWaveAllocationView
+from .....core.config import Settings
+from .....core.sumo_interface import SumoInterface
+from .....domain.enums import SeverityEnum
+from .....domain.schemas import GreenWaveAllocationView
 from .edf import ArbitrationPolicy, EDFArbitration
 
-_DRAIN_HIGHLIGHT_COLOR: Tuple[int, int, int, int] = (0, 200, 255, 255)
-_DEFAULT_HIGHLIGHT_COLOR: Tuple[int, int, int, int] = (255, 255, 255, 255)
+_DRAIN_HIGHLIGHT_COLOR: tuple[int, int, int, int] = (0, 200, 255, 255)
+_DEFAULT_HIGHLIGHT_COLOR: tuple[int, int, int, int] = (255, 255, 255, 255)
 _TLS_MARKER_HALF_SIZE: float = 4.0
 _LANE_HIGHLIGHT_LINE_WIDTH: float = 3.0
 _HIGHLIGHT_LAYER: int = 10
 
 
 class Phase(str, Enum):
-    CLEARING = "CLEARING"        # yellow on opposing greens; wait T_clear
-    EV_GREEN = "EV_GREEN"        # green for priority lane, red elsewhere; wait until requester is done
+    CLEARING = "CLEARING"  # yellow on opposing greens; wait T_clear
+    EV_GREEN = "EV_GREEN"  # green for priority lane, red elsewhere; wait until requester is done
     EXIT_YELLOW = "EXIT_YELLOW"  # yellow on priority greens; wait T_clear, then restore or hand off
 
 
@@ -32,26 +31,30 @@ class _PendingRequest:
 @dataclass
 class _Allocation:
     tls_id: str
-    requester_id: str       # vehicle ID for EVs; "drain:<edge>" for spillback drains
-    priority_value: float   # ETA-based for EVs; DRAIN_PRIORITY_VALUE for drains. Lower = wins arbitration.
+    requester_id: str  # vehicle ID for EVs; "drain:<edge>" for spillback drains
+    priority_value: float  # ETA-based for EVs; DRAIN_PRIORITY_VALUE for drains. Lower = wins arbitration.
     severity: str
     original_program: str
-    controlled_lanes: List[str]
-    priority_edge: str      # edge whose lanes receive the green signal
+    controlled_lanes: list[str]
+    priority_edge: str  # edge whose lanes receive the green signal
     phase: Phase
-    wait_until: Optional[float]     # absolute sim time; None means event-driven exit
+    wait_until: float | None  # absolute sim time; None means event-driven exit
     # set when entering EV_GREEN; used for anti-flicker hold and drain timeout
-    ev_green_started_at: Optional[float] = None
+    ev_green_started_at: float | None = None
     # drain only: True if it left EV_GREEN by hitting DRAIN_MAX_DURATION without
     # clearing the edge. Triggers the post-cap cooldown on restore.
     ended_by_cap: bool = False
-    pending: List[_PendingRequest] = field(default_factory=list)  # priority-sorted waiters
-    highlight_polygon_ids: List[str] = field(default_factory=list)  # SUMO polygon IDs for visual overlay
+    pending: list[_PendingRequest] = field(
+        default_factory=list
+    )  # priority-sorted waiters
+    highlight_polygon_ids: list[str] = field(
+        default_factory=list
+    )  # SUMO polygon IDs for visual overlay
 
 
 def first_route_edge_at_tls(
-    sumo: SumoInterface, veh_id: str, controlled_lanes: List[str]
-) -> Optional[str]:
+    sumo: SumoInterface, veh_id: str, controlled_lanes: list[str]
+) -> str | None:
     """Return the first edge on veh_id's remaining route that is controlled by this TLS."""
     controlled_edges = {sumo.lane_get_edge_id(lane) for lane in controlled_lanes}
     route = sumo.vehicle_get_route(veh_id)
@@ -110,8 +113,8 @@ class GreenWaveManager:
         self,
         settings: Settings,
         sumo: SumoInterface,
-        arbitration: Optional[ArbitrationPolicy] = None,
-        min_ev_green_hold: Optional[float] = None,
+        arbitration: ArbitrationPolicy | None = None,
+        min_ev_green_hold: float | None = None,
         ev_preemption: bool = False,
     ):
         self.settings = settings
@@ -132,12 +135,12 @@ class GreenWaveManager:
         # EV may preempt, but only while the holder is in EV_GREEN (see
         # _holder_is_locked). The strategy passes GW_EV_PREEMPTION.
         self._ev_preemption: bool = ev_preemption
-        self._allocations: List[_Allocation] = []
+        self._allocations: list[_Allocation] = []
         self._highlight_counter: int = 0
         # tls_id -> sim time until which a new drain at that TLS is blocked. Set
         # when a drain ends by hitting the safety cap without clearing its edge;
         # prevents drain flapping on a chronically saturated lane.
-        self._drain_cooldown_until: Dict[str, float] = {}
+        self._drain_cooldown_until: dict[str, float] = {}
 
     # -------- public API --------
 
@@ -176,10 +179,14 @@ class GreenWaveManager:
             #   - a drain NEVER preempts an EV holder — it queues;
             #   - an EV ALWAYS preempts a drain holder — graceful hand-off.
             if not holder_is_drain and requester_is_drain:
-                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                self._enqueue(
+                    existing, requester_id, priority_edge, priority_value, severity
+                )
                 return True
             if holder_is_drain and not requester_is_drain:
-                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                self._enqueue(
+                    existing, requester_id, priority_edge, priority_value, severity
+                )
                 # End the drain's green so the EV takes over at the natural hand-off.
                 # Guard against re-triggering once it is already in EXIT_YELLOW: the
                 # strategy re-requests this TLS every tick while the EV is in range,
@@ -191,10 +198,16 @@ class GreenWaveManager:
 
             # Same class (EV vs EV, or drain vs drain): arbitrate by priority_value.
             if self._holder_is_locked(existing):
-                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+                self._enqueue(
+                    existing, requester_id, priority_edge, priority_value, severity
+                )
                 return True
-            if not self.arbitration.can_preempt(existing.priority_value, priority_value):
-                self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+            if not self.arbitration.can_preempt(
+                existing.priority_value, priority_value
+            ):
+                self._enqueue(
+                    existing, requester_id, priority_edge, priority_value, severity
+                )
                 return True
             # Graceful preemption. Only reachable with EV-EV preemption enabled and
             # the holder in EV_GREEN past the anti-flicker hold. Never tear the
@@ -203,7 +216,9 @@ class GreenWaveManager:
             # outgoing greens). The natural hand-off at the end of EXIT_YELLOW
             # promotes the highest-priority pending requester. Guard as above so a
             # per-tick re-request never resets wait_until once in EXIT_YELLOW.
-            self._enqueue(existing, requester_id, priority_edge, priority_value, severity)
+            self._enqueue(
+                existing, requester_id, priority_edge, priority_value, severity
+            )
             if existing.phase != Phase.EXIT_YELLOW:
                 self._enter_exit_yellow(existing, self.sumo.get_time())
             return True
@@ -253,13 +268,15 @@ class GreenWaveManager:
         # in-place self._allocations.remove() during this iteration. Removing in-place
         # would shift indices and cause the for-loop iterator to skip the next alloc,
         # leaking its TLS in a frozen manual state.
-        survivors: List[_Allocation] = []
+        survivors: list[_Allocation] = []
         for alloc in self._allocations:
             if self._ready_to_advance(alloc, now):
                 if alloc.phase == Phase.CLEARING:
                     self._enter_ev_green(alloc, now)
                 elif alloc.phase == Phase.EV_GREEN:
-                    if alloc.requester_id.startswith("drain:") and self._drain_capped(alloc, now):
+                    if alloc.requester_id.startswith("drain:") and self._drain_capped(
+                        alloc, now
+                    ):
                         alloc.ended_by_cap = True
                     self._enter_exit_yellow(alloc, now)
                 elif alloc.phase == Phase.EXIT_YELLOW:
@@ -276,7 +293,7 @@ class GreenWaveManager:
         self._allocations = survivors
 
     @property
-    def allocations(self) -> List[GreenWaveAllocationView]:
+    def allocations(self) -> list[GreenWaveAllocationView]:
         return [
             GreenWaveAllocationView(
                 tls_id=a.tls_id,
@@ -301,8 +318,7 @@ class GreenWaveManager:
         # priority lane so SUMO advances it naturally to red while we wait.
         current = self.sumo.trafficlight_get_red_yellow_green_state(alloc.tls_id)
         new_state = "".join(
-            ch if alloc.priority_edge in lane
-            else ("y" if ch in ("g", "G") else ch)
+            ch if alloc.priority_edge in lane else ("y" if ch in ("g", "G") else ch)
             for ch, lane in zip(current, alloc.controlled_lanes)
         )
         if new_state != current:
@@ -352,7 +368,9 @@ class GreenWaveManager:
             return True
         if holder.phase != Phase.EV_GREEN or holder.ev_green_started_at is None:
             return True
-        return (self.sumo.get_time() - holder.ev_green_started_at) < self._min_ev_green_hold
+        return (
+            self.sumo.get_time() - holder.ev_green_started_at
+        ) < self._min_ev_green_hold
 
     def _enqueue(
         self,
@@ -380,7 +398,7 @@ class GreenWaveManager:
             )
         holder.pending.sort(key=lambda p: p.priority_value)
 
-    def _handoff_or_restore(self, finishing: _Allocation) -> Optional[_Allocation]:
+    def _handoff_or_restore(self, finishing: _Allocation) -> _Allocation | None:
         """If a still-relevant pending requester exists, hand off without restoring the program.
         Otherwise restore the original program. Returns the new allocation, or None."""
         while finishing.pending:
@@ -430,7 +448,7 @@ class GreenWaveManager:
 
     # -------- helpers --------
 
-    def _find_at_tls(self, tls_id: str) -> Optional[_Allocation]:
+    def _find_at_tls(self, tls_id: str) -> _Allocation | None:
         for a in self._allocations:
             if a.tls_id == tls_id:
                 return a
@@ -453,7 +471,10 @@ class GreenWaveManager:
         if self._drain_capped(alloc, now):
             return True
         # Hysteresis: occupancy fell below the release threshold.
-        return self._max_lane_occupancy(alloc.priority_edge) < self.settings.SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD
+        return (
+            self._max_lane_occupancy(alloc.priority_edge)
+            < self.settings.SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD
+        )
 
     def _max_lane_occupancy(self, edge_id: str) -> float:
         """Return the maximum last-step occupancy across all lanes of edge_id."""
@@ -490,7 +511,9 @@ class GreenWaveManager:
             self.sumo.trafficlight_set_program(alloc.tls_id, alloc.original_program)
         except self.sumo.TraCIException:
             pass
-        label = "Drain" if alloc.requester_id.startswith("drain:") else "Emergency Vehicle"
+        label = (
+            "Drain" if alloc.requester_id.startswith("drain:") else "Emergency Vehicle"
+        )
         print(
             f"{self.sumo.get_time()} - {label} "
             f"{alloc.requester_id} has left TLS {alloc.tls_id}"
@@ -516,8 +539,12 @@ class GreenWaveManager:
             poly_id = self._next_highlight_id("lane")
             try:
                 self.sumo.polygon_add(
-                    poly_id, shape, color,
-                    fill=False, layer=_HIGHLIGHT_LAYER, line_width=_LANE_HIGHLIGHT_LINE_WIDTH,
+                    poly_id,
+                    shape,
+                    color,
+                    fill=False,
+                    layer=_HIGHLIGHT_LAYER,
+                    line_width=_LANE_HIGHLIGHT_LINE_WIDTH,
                 )
                 alloc.highlight_polygon_ids.append(poly_id)
             except self.sumo.TraCIException:
@@ -529,13 +556,21 @@ class GreenWaveManager:
             return
         h = _TLS_MARKER_HALF_SIZE
         marker_shape = [
-            (x - h, y - h), (x + h, y - h), (x + h, y + h), (x - h, y + h), (x - h, y - h),
+            (x - h, y - h),
+            (x + h, y - h),
+            (x + h, y + h),
+            (x - h, y + h),
+            (x - h, y - h),
         ]
         poly_id = self._next_highlight_id("tls")
         try:
             self.sumo.polygon_add(
-                poly_id, marker_shape, color,
-                fill=True, layer=_HIGHLIGHT_LAYER, line_width=1.0,
+                poly_id,
+                marker_shape,
+                color,
+                fill=True,
+                layer=_HIGHLIGHT_LAYER,
+                line_width=1.0,
             )
             alloc.highlight_polygon_ids.append(poly_id)
         except self.sumo.TraCIException:
@@ -549,7 +584,7 @@ class GreenWaveManager:
                 pass
         alloc.highlight_polygon_ids = []
 
-    def _allocation_color(self, alloc: _Allocation) -> Tuple[int, int, int, int]:
+    def _allocation_color(self, alloc: _Allocation) -> tuple[int, int, int, int]:
         if alloc.requester_id.startswith("drain:"):
             return _DRAIN_HIGHLIGHT_COLOR
         try:

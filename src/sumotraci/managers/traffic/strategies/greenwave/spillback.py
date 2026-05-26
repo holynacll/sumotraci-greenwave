@@ -1,18 +1,21 @@
 from dataclasses import dataclass
-from typing import Dict, FrozenSet, List, Optional
 
-from ...core.config import Settings
-from ...core.sumo_interface import SumoInterface
+from .....core.config import Settings
+from .....core.sumo_interface import SumoInterface
 
 
 @dataclass
 class SpillbackSignal:
     ev_id: str
-    at_tls_id: str            # TLS the EV is approaching where this outgoing was scanned
-    saturated_edge: str       # an outgoing edge from at_tls_id that is saturated
-    downstream_tls_id: str    # TLS controlling exit from saturated_edge (where to issue drain)
-    occupancy: float          # max lane occupancy on saturated_edge (0–1)
-    on_ev_path: bool          # True if saturated_edge is the EV's own outgoing edge at at_tls_id
+    at_tls_id: str  # TLS the EV is approaching where this outgoing was scanned
+    saturated_edge: str  # an outgoing edge from at_tls_id that is saturated
+    downstream_tls_id: (
+        str  # TLS controlling exit from saturated_edge (where to issue drain)
+    )
+    occupancy: float  # max lane occupancy on saturated_edge (0–1)
+    on_ev_path: (
+        bool  # True if saturated_edge is the EV's own outgoing edge at at_tls_id
+    )
 
 
 class SpillbackDetector:
@@ -44,22 +47,22 @@ class SpillbackDetector:
     def __init__(self, settings: Settings, sumo: SumoInterface):
         self.settings = settings
         self.sumo = sumo
-        self._tls_incoming_cache: Dict[str, FrozenSet[str]] = {}
-        self._tls_outgoing_cache: Dict[str, FrozenSet[str]] = {}
-        self._edge_to_controlling_tls: Optional[Dict[str, str]] = None
+        self._tls_incoming_cache: dict[str, frozenset[str]] = {}
+        self._tls_outgoing_cache: dict[str, frozenset[str]] = {}
+        self._edge_to_controlling_tls: dict[str, str] | None = None
 
-    def evaluate(self, ev_id: str) -> List[SpillbackSignal]:
+    def evaluate(self, ev_id: str) -> list[SpillbackSignal]:
         corridor = self._corridor_tls(ev_id)
         if not corridor:
             return []
 
-        signals: List[SpillbackSignal] = []
+        signals: list[SpillbackSignal] = []
         seen_outgoings: set = set()
         visited_tls: set = set(corridor)
-        frontier: List[str] = list(corridor)
+        frontier: list[str] = list(corridor)
 
         for _ in range(max(1, self.settings.SPILLBACK_GRAPH_DEPTH)):
-            next_frontier: List[str] = []
+            next_frontier: list[str] = []
             for tls_id in frontier:
                 ev_outgoing_edge = self._ev_outgoing_at_tls(ev_id, tls_id)
                 for outgoing_edge in self._outgoing_edges(tls_id):
@@ -92,7 +95,7 @@ class SpillbackDetector:
                 break
         return signals
 
-    def _corridor_tls(self, ev_id: str) -> List[str]:
+    def _corridor_tls(self, ev_id: str) -> list[str]:
         """The EV's corridor: every TLS on its path within VEHICLE_DISTANCE_TO_TLS,
         in order. These seed the BFS so the spillback covers the same horizon the
         green wave preempts, not just the first crossing."""
@@ -108,7 +111,7 @@ class SpillbackDetector:
 
     # -------- helpers --------
 
-    def _ev_outgoing_at_tls(self, ev_id: str, tls_id: str) -> Optional[str]:
+    def _ev_outgoing_at_tls(self, ev_id: str, tls_id: str) -> str | None:
         try:
             route = self.sumo.vehicle_get_route(ev_id)
             route_idx = self.sumo.vehicle_get_route_index(ev_id)
@@ -123,7 +126,7 @@ class SpillbackDetector:
                 return edge
         return None
 
-    def _incoming_edges(self, tls_id: str) -> FrozenSet[str]:
+    def _incoming_edges(self, tls_id: str) -> frozenset[str]:
         if tls_id in self._tls_incoming_cache:
             return self._tls_incoming_cache[tls_id]
         try:
@@ -134,7 +137,7 @@ class SpillbackDetector:
         self._tls_incoming_cache[tls_id] = edges
         return edges
 
-    def _outgoing_edges(self, tls_id: str) -> FrozenSet[str]:
+    def _outgoing_edges(self, tls_id: str) -> frozenset[str]:
         if tls_id in self._tls_outgoing_cache:
             return self._tls_outgoing_cache[tls_id]
         try:
@@ -160,13 +163,13 @@ class SpillbackDetector:
         self._tls_outgoing_cache[tls_id] = result
         return result
 
-    def _tls_at_end_of(self, edge_id: str) -> Optional[str]:
+    def _tls_at_end_of(self, edge_id: str) -> str | None:
         if self._edge_to_controlling_tls is None:
             self._build_edge_to_tls_map()
         return self._edge_to_controlling_tls.get(edge_id)  # type: ignore[union-attr]
 
     def _build_edge_to_tls_map(self) -> None:
-        mapping: Dict[str, str] = {}
+        mapping: dict[str, str] = {}
         try:
             tls_ids = self.sumo.trafficlight_get_id_list()
         except self.sumo.TraCIException:

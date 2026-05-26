@@ -20,17 +20,18 @@ The combinations cover the full ablation study; see docs/ALGORITHMS.md.
 Operational improvements (CollisionManager, scenario defaults) are global and
 apply regardless of which combination is selected.
 """
-from typing import List, Optional
 
-from ....core.config import Settings
-from ....core.sumo_interface import SumoInterface
-from ....domain.schemas import GreenWaveAllocationView
-from ...emergency_manager import EmergencyManager
-from ..edf import EDFArbitration
-from ..green_wave import GreenWaveManager, first_route_edge_at_tls
-from ..priority import PriorityPolicy, make_priority_policy
-from ..spillback import SpillbackDetector
-from .base import TrafficControlStrategy
+from typing import Optional
+
+from .....core.config import Settings
+from .....core.sumo_interface import SumoInterface
+from .....domain.schemas import GreenWaveAllocationView
+from ....emergency_manager import EmergencyManager
+from ..base import TrafficControlStrategy
+from .edf import EDFArbitration
+from .engine import GreenWaveManager, first_route_edge_at_tls
+from .priority import PriorityPolicy, make_priority_policy
+from .spillback import SpillbackDetector
 
 
 class GreenWaveStrategy(TrafficControlStrategy):
@@ -52,9 +53,7 @@ class GreenWaveStrategy(TrafficControlStrategy):
         effective_delta = (
             settings.PREEMPT_DELTA_THRESHOLD if settings.GW_ANTIFLICKER else 0.0
         )
-        effective_hold = (
-            settings.MIN_EV_GREEN_HOLD if settings.GW_ANTIFLICKER else 0.0
-        )
+        effective_hold = settings.MIN_EV_GREEN_HOLD if settings.GW_ANTIFLICKER else 0.0
 
         self._green_wave = GreenWaveManager(
             settings,
@@ -103,7 +102,9 @@ class GreenWaveStrategy(TrafficControlStrategy):
                 if tls_id in tls_to_skip:
                     continue
                 try:
-                    controlled_lanes = self.sumo.trafficlight_get_controlled_lanes(tls_id)
+                    controlled_lanes = self.sumo.trafficlight_get_controlled_lanes(
+                        tls_id
+                    )
                 except self.sumo.TraCIException:
                     continue
                 priority_edge = first_route_edge_at_tls(
@@ -119,5 +120,5 @@ class GreenWaveStrategy(TrafficControlStrategy):
                     severity=ev.severity,
                 )
 
-    def active_allocations(self) -> List[GreenWaveAllocationView]:
+    def active_allocations(self) -> list[GreenWaveAllocationView]:
         return self._green_wave.allocations

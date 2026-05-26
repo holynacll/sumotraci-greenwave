@@ -10,11 +10,12 @@ toggles (anti-flicker, pending queue, spillback) which add/remove behaviour.
   - ``ETAPriority`` — estimated time of arrival at the TLS plus a small severity
     penalty. Proximity dominates; severity is a fine tie-breaker.
 """
+
 from abc import ABC, abstractmethod
 from typing import Any
 
-from ...core.config import Settings
-from ...domain.enums import SeverityEnum
+from .....core.config import Settings
+from .....domain.enums import SeverityEnum
 
 _VALID_PRIORITY_POLICIES = ("deadline", "eta")
 
