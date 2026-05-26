@@ -87,8 +87,8 @@ class Settings(BaseSettings):
     MAX_STOP_DURATION: int = 10
 
     # Spillback shield (Phase A)
-    SPILLBACK_OCCUPANCY_THRESHOLD: float = 0.7  # detect saturation
-    SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD: float = 0.4  # hysteresis release
+    SPILLBACK_OCCUPANCY_THRESHOLD: float = 0.6  # detect saturation
+    SPILLBACK_OCCUPANCY_RELEASE_THRESHOLD: float = 0.3  # hysteresis release
     DRAIN_MAX_DURATION: float = 20.0  # safety cap (s) for a single drain
     # After a drain ends by hitting DRAIN_MAX_DURATION WITHOUT clearing its edge
     # (occupancy never fell below the release threshold), block a new drain at that
