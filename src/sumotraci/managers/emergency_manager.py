@@ -22,7 +22,8 @@ class EmergencyManager:
 
     def monitor_emergency_vehicles(self) -> None:
         self.scan_schedule_to_dispatch_emergency_vehicle()
-        self.monitor_change_lane_accidented_vehicle()
+        if self.settings.MONITOR_CHANGE_LANE:
+            self.monitor_change_lane_accidented_vehicle()
         self.monitor_emergency_vehicles_on_the_way()
         self.monitor_emergency_vehicles_in_the_accident()
         self.monitor_emergency_vehicles_to_the_hospital()

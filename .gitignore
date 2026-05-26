@@ -138,3 +138,6 @@ nosetests.xml
 .pdm.toml
 .pdm-python/
 ```
+
+# Sumo files
+data/**

@@ -86,13 +86,13 @@ class SimulationEngine:
                 sumoBinary,
                 "-c",
                 self.sumocfg_path,
-                "--device.bluelight.reactiondist",
-                str(self.settings.BLUE_LIGHT_REACTION_DIST),
+                # "--device.bluelight.reactiondist",
+                # str(self.settings.BLUE_LIGHT_REACTION_DIST),
                 # SUMO only warns on collisions; the CollisionManager removes
                 # civilian participants manually and leaves EVs in the sim so
                 # subsequent TraCI calls / EmergencyManager keep working.
                 "--collision.action",
-                "warn",
+                "warn",  # warn, teleport, remove
                 # Speeds up recovery from yield/jam jams behind the EV.
                 "--time-to-teleport",
                 "180",

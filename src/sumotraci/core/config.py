@@ -65,10 +65,10 @@ class Settings(BaseSettings):
     # The pending-allocation queue with hand-off is intrinsic (always on): losers
     # of arbitration queue on the holder and take over at the natural hand-off.
     GW_PRIORITY: str = "eta"
-    GW_EV_PREEMPTION: bool = False
-    GW_ANTIFLICKER: bool = False
+    GW_EV_PREEMPTION: bool = True
+    GW_ANTIFLICKER: bool = True
     GW_SPILLBACK: bool = True
-    GW_FAST_HANDOFF: bool = False
+    GW_FAST_HANDOFF: bool = True
 
     # Traffic Management
     SAFE_GUARD_PROPORTION_FOR_COMPLETION_GWA: float = 0.8
@@ -76,6 +76,8 @@ class Settings(BaseSettings):
     VEHICLE_DISTANCE_TO_TLS: int = 400
     TIME_FOR_NEXT_ACCIDENT: float = 300.0
     SIMULATION_END_TIME: float = 900.0
+    # Monitor change lane for accidented vehicles
+    MONITOR_CHANGE_LANE: bool = True
 
     # Network Properties
     LANE_LENGTH: float = 300.0
@@ -116,7 +118,7 @@ class Settings(BaseSettings):
     # s; preemption locked-out for first MIN_EV_GREEN_HOLD seconds of EV_GREEN
     MIN_EV_GREEN_HOLD: float = 5.0
     # s; new requester must be at least this much better in priority_value to preempt
-    PREEMPT_DELTA_THRESHOLD: float = 2.0
+    PREEMPT_DELTA_THRESHOLD: float = 30.0
 
     # Visual: paint the priority edge lanes and a marker at the TLS junction with
     # the EV's severity color (or cyan for drain allocations) while the
