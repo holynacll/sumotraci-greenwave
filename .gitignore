@@ -141,3 +141,6 @@ nosetests.xml
 
 # Sumo files
 data/**
+
+# Tabelas e figuras do notebooks/benchmark_analysis.ipynb
+file_results/
