@@ -113,6 +113,7 @@ class SimulationEngine:
         print(f"Algorithm: {self.settings.ALGORITHM}")
 
         step = 0
+        finished = False
         try:
             self.accident_manager.generate_elegible_accidented_roads_and_hospital_positions()
 
@@ -149,7 +150,16 @@ class SimulationEngine:
                 f"removed across {self.collision_manager.collision_steps} steps "
                 f"(EV-involved events: {self.collision_manager.ev_collisions})"
             )
+            finished = True
 
+        except Exception:
+            print(traceback.format_exc())
+        finally:
+            self.sumo.close()
+
+        # SUMO only completes the tripinfo/lanedata XML files on close, so the
+        # conversion must run after it (parsing them earlier always fails).
+        if finished:
             print("Generating CSV files...")
             saveds = self.emergency_manager.count_saveds
             un_saveds = self.accident_manager.count_accidents - saveds
@@ -182,11 +192,6 @@ class SimulationEngine:
                 )
 
             print("CSV files generated!")
-
-        except Exception:
-            print(traceback.format_exc())
-        finally:
-            self.sumo.close()
 
     def _should_continue_sim(self) -> bool:
         numVehicles = self.sumo.get_min_expected_number()
