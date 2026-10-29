@@ -314,15 +314,17 @@ class GreenWaveManager:
         return alloc.wait_until is not None and now >= alloc.wait_until
 
     def _enter_clearing(self, alloc: _Allocation) -> None:
-        # Set yellow on lanes currently green on conflicting approaches; preserve the
-        # priority lane so SUMO advances it naturally to red while we wait.
+        # Set yellow on lanes currently green on conflicting approaches; the priority
+        # lane keeps its current signal. Always write, even when nothing changes: the
+        # write is what freezes the TLS. Without it (e.g. during an all-yellow base
+        # phase) the base program keeps running, may open a conflicting green while
+        # we wait, and EV_GREEN would then cut that green straight to red.
         current = self.sumo.trafficlight_get_red_yellow_green_state(alloc.tls_id)
         new_state = "".join(
             ch if alloc.priority_edge in lane else ("y" if ch in ("g", "G") else ch)
             for ch, lane in zip(current, alloc.controlled_lanes)
         )
-        if new_state != current:
-            self.sumo.trafficlight_set_red_yellow_green_state(alloc.tls_id, new_state)
+        self.sumo.trafficlight_set_red_yellow_green_state(alloc.tls_id, new_state)
         alloc.phase = Phase.CLEARING
         alloc.wait_until = (
             self.sumo.get_time() + self.settings.TLJ_PHASE_RED_TO_GREEN_DURATION_LIMIT
