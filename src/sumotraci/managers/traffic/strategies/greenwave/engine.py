@@ -105,6 +105,8 @@ class GreenWaveManager:
     Pending queue: when a request loses arbitration to the current holder, it joins
     the holder's pending list (priority-sorted). On natural finish the next pending
     requester takes over directly — avoiding a round-trip through the original program.
+    It re-runs CLEARING, or with fast hand-off (GW_FAST_HANDOFF) starts straight in
+    EV_GREEN, since the holder's EXIT_YELLOW already cleared the junction.
     The pending list is wiped each tick and refilled by the strategy's calls in the
     same step.
     """
@@ -116,6 +118,7 @@ class GreenWaveManager:
         arbitration: ArbitrationPolicy | None = None,
         min_ev_green_hold: float | None = None,
         ev_preemption: bool = False,
+        fast_handoff: bool = False,
     ):
         self.settings = settings
         self.sumo = sumo
@@ -135,6 +138,12 @@ class GreenWaveManager:
         # EV may preempt, but only while the holder is in EV_GREEN (see
         # _holder_is_locked). The strategy passes GW_EV_PREEMPTION.
         self._ev_preemption: bool = ev_preemption
+        # Fast hand-off. When True, a hand-off successor starts straight in EV_GREEN:
+        # by the end of the predecessor's EXIT_YELLOW every lane has spent T_clear
+        # seconds on yellow or red, so re-running CLEARING would only double-count
+        # that clearance. When False (default), the successor re-runs CLEARING. The
+        # strategy passes GW_FAST_HANDOFF.
+        self._fast_handoff: bool = fast_handoff
         self._allocations: list[_Allocation] = []
         self._highlight_counter: int = 0
         # tls_id -> sim time until which a new drain at that TLS is blocked. Set
@@ -280,7 +289,7 @@ class GreenWaveManager:
                         alloc.ended_by_cap = True
                     self._enter_exit_yellow(alloc, now)
                 elif alloc.phase == Phase.EXIT_YELLOW:
-                    replacement = self._handoff_or_restore(alloc)
+                    replacement = self._handoff_or_restore(alloc, now)
                     if replacement is not None:
                         survivors.append(replacement)
                     continue
@@ -400,7 +409,9 @@ class GreenWaveManager:
             )
         holder.pending.sort(key=lambda p: p.priority_value)
 
-    def _handoff_or_restore(self, finishing: _Allocation) -> _Allocation | None:
+    def _handoff_or_restore(
+        self, finishing: _Allocation, now: float
+    ) -> _Allocation | None:
         """If a still-relevant pending requester exists, hand off without restoring the program.
         Otherwise restore the original program. Returns the new allocation, or None."""
         while finishing.pending:
@@ -423,7 +434,12 @@ class GreenWaveManager:
                 wait_until=None,
                 pending=list(finishing.pending),  # rest of the queue carries over
             )
-            self._enter_clearing(successor)
+            if self._fast_handoff:
+                # finishing's EXIT_YELLOW already cleared the junction.
+                self._enter_ev_green(successor, now)
+                self._set_highlight(successor)
+            else:
+                self._enter_clearing(successor)
             print(
                 f"{self.sumo.get_time()} - Hand-off at TLS {finishing.tls_id}: "
                 f"{finishing.requester_id} -> {head.requester_id}"

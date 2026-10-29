@@ -12,6 +12,9 @@ improvements are composed via `Settings`:
                             GW_EV_PREEMPTION is on): MIN_EV_GREEN_HOLD +
                             PREEMPT_DELTA_THRESHOLD.
   - ``GW_SPILLBACK``      — toggle: BFS spillback detector + drain requests.
+  - ``GW_FAST_HANDOFF``   — toggle: on hand-off, the successor starts straight in
+                            EV_GREEN instead of re-running CLEARING (the holder's
+                            EXIT_YELLOW already cleared the junction).
 
 The pending-allocation queue with hand-off is intrinsic to the engine (always on):
 losers of arbitration queue on the holder and take over at the natural hand-off.
@@ -61,6 +64,7 @@ class GreenWaveStrategy(TrafficControlStrategy):
             arbitration=EDFArbitration(delta=effective_delta),
             min_ev_green_hold=effective_hold,
             ev_preemption=settings.GW_EV_PREEMPTION,
+            fast_handoff=settings.GW_FAST_HANDOFF,
         )
 
         self._detector: Optional[SpillbackDetector] = (
