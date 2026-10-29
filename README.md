@@ -42,8 +42,10 @@ Construído com arquitetura modular, Pydantic settings, e tooling moderno (`uv`,
 ### 1. `SUMO_HOME`
 
 ```bash
-export SUMO_HOME=/path/to/your/sumo
-export SUMO_HOME=$(pwd)/.venv/lib/python3.11/site-packages/sumo
+# SUMO do pacote eclipse-sumo instalado no venv (vale para qualquer versão do Python):
+export SUMO_HOME=$(uv run python -c "import sumo; print(sumo.SUMO_HOME)")
+# ou, com um SUMO instalado no sistema:
+# export SUMO_HOME=/path/to/your/sumo
 ```
 
 ### 2. Rodar a simulação
@@ -63,6 +65,15 @@ uv run python -m sumotraci.main --nogui --simulation-end-time 900
 
 A composição do `greenwave` (toggles `GW_*`) é definida via `.env` ou variáveis de
 ambiente — não há flag CLI dedicada para cada toggle.
+
+### 3. Benchmark com as 10 seeds
+
+```bash
+uv run python -u -m sumotraci.scripts.eval_multi_seed --algorithm baseline greenwave_legacy greenwave
+```
+
+Passo a passo, variantes do `greenwave` e conferência dos resultados em
+[docs/BENCHMARK.md](docs/BENCHMARK.md).
 
 ## Composição do `greenwave`
 
